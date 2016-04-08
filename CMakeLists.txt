@@ -33,7 +33,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 add_executable(p2p-dedup
 	./src/p2p-main.c
 	./src/p2p-handler.c
-	./src/p2p-list.c
 	./src/p2p-utils.c
 )
 
