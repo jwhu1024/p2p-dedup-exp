@@ -1,7 +1,6 @@
 #ifndef _P2P_HANDLER_H_
 #define _P2P_HANDLER_H_
 
-#include "czmq.h"
 typedef struct req_info {
 	char *event;
 	char *peer;

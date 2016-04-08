@@ -41,33 +41,39 @@ int event_enter_handler (req_info_t *info)
 int event_evasive_handler (req_info_t *info)
 {
 	DBG ("%s is being evasive\n", info->name);
+	free_mem(info);
 	return 1;
 }
 
 int event_exit_handler (req_info_t *info)
 {
 	DBG ("%s%s has left the chat%s\n", YELLOW, info->name, RESET);
+	free_mem(info);
 	return 1;
 }
 
 int event_join_handler (req_info_t *info)
 {
+	free_mem(info);
 	return 1;
 }
 
 int event_leave_handler (req_info_t *info)
 {
+	free_mem(info);
 	return 1;
 }
 
 int event_whisper_handler (req_info_t *info)
 {
 	DBG ("%s%s: %s%s\n", LIGHT_GRAY, info->name, info->message, RESET);
+	free_mem(info);
 	return 1;
 }
 
 int event_shout_handler (req_info_t *info)
 {
 	DBG ("%s%s: %s%s\n", LIGHT_GREEN, info->name, info->message, RESET);
+	free_mem(info);
 	return 1;
 }

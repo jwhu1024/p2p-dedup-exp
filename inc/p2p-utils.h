@@ -1,9 +1,8 @@
-#ifndef _UTILS_H_
-#define _UTILS_H_
+#ifndef _P2P_UTILS_H_
+#define _P2P_UTILS_H_
 
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
 
 #include "czmq.h"
 
@@ -29,13 +28,13 @@
 
 #ifdef __DEBUG__
 	#define DBG(message, ...) \
-		printf("[%d][%s:%d:%s] " message, (int)time(NULL),	\
-											__SHORT_FILE__,	\
-											__LINE__, 		\
-											__FUNCTION__, 	\
+		printf("[%d][%s:%d:%s] " message, (int) time (NULL),	\
+											__SHORT_FILE__,		\
+											__LINE__, 			\
+											__FUNCTION__, 		\
 											##__VA_ARGS__)
 #else
 	#define DBG(message, ...)
 #endif
 
-#endif /* _UTILS_H_ */
+#endif /* _P2P_UTILS_H_ */

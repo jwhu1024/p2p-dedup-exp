@@ -1,4 +1,4 @@
-# p2p-proto
+# zyre-dedup 
 discovery peers in local network by using zyre
 
 # Setup
@@ -21,6 +21,6 @@ discovery peers in local network by using zyre
  8. sudo ldconfig
 
 # Build
-1. cd p2p-proto && cmake -H. -Boutput -DCMAKE_BUILD_TYPE=[Debug|Release]
+1. cd zyre-dedup && cmake -H. -Boutput -DCMAKE_BUILD_TYPE=[Debug|Release]
 2. cd output && make
-3. ./run.sh
+3. ./bin/p2p-dedup 
