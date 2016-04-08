@@ -1,5 +1,5 @@
 # p2p-proto
-discovery peers in local network by using zbeacon
+discovery peers in local network by using zyre
 
 # Setup
 1. install zeromq
