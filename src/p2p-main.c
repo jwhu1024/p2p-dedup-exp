@@ -91,8 +91,8 @@ static void dedup_actor (zsock_t *pipe, void *args)
 			ri.message 	= zmsg_popstr (msg);
 
 			zyre_cmd_table_t *t = zyre_op_func_tbl;
-			while (t->cmd[0] != '\0') {
-				if (streq (ri.event, t->cmd)) {
+			while (t->event[0] != '\0') {
+				if (streq (ri.event, t->event)) {
 					t->EV_HANDLER(&ri);
 					break;
 				}

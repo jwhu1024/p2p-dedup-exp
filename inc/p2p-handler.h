@@ -10,7 +10,7 @@ typedef struct req_info {
 } req_info_t;
 
 typedef struct zyre_cmd_table {
-	char cmd[16];
+	char event[16];
 	int (*EV_HANDLER) (req_info_t *info);
 } zyre_cmd_table_t;
 
