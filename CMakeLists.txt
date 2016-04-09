@@ -32,9 +32,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 # generate binary
 add_executable(p2p-dedup
 	./src/p2p-main.c
-	./src/p2p-handler.c
+	./src/p2p-cmd-handler.c
+	./src/p2p-event-handler.c
 	./src/p2p-utils.c
 )
 
 # setting library to link
-target_link_libraries(p2p-dedup libzyre.so libzmq.so libczmq.so libpthread.so)
+target_link_libraries(p2p-dedup libzyre.so libzmq.so libczmq.so libpthread.so librt.so)

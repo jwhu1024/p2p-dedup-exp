@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "p2p-utils.h"
-#include "p2p-handler.h"
+#include "p2p-event-handler.h"
 
 int event_enter_handler 	(req_info_t *info);
 int event_evasive_handler 	(req_info_t *info);
@@ -24,11 +24,11 @@ zyre_cmd_table_t zyre_op_func_tbl[] = {
 
 void free_mem (req_info_t *info)
 {
-	free(info->event);
-	free(info->peer);
-	free(info->name);
-	free(info->group);
-	free(info->message);
+	if (info->event)	free(info->event);
+	if (info->peer)		free(info->peer);
+	if (info->name)		free(info->name);
+	if (info->group)	free(info->group);
+	if (info->message)	free(info->message);
 }
 
 int event_enter_handler (req_info_t *info)
@@ -66,7 +66,7 @@ int event_leave_handler (req_info_t *info)
 
 int event_whisper_handler (req_info_t *info)
 {
-	DBG ("%s%s: %s%s\n", LIGHT_GRAY, info->name, info->message, RESET);
+	DBG ("%s%s: %s%s\n", RED, info->name, info->message, RESET);
 	free_mem(info);
 	return 1;
 }

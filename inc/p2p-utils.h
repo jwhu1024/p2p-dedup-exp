@@ -37,4 +37,16 @@
 	#define DBG(message, ...)
 #endif
 
+typedef struct timer_s {
+	char name[16];
+	timer_t *timer_id;
+	int exp_sec;
+	int int_sec;
+	void (*timer_handler) (int sig, siginfo_t *si, void *uc);
+} timer_s_t;
+
+void print_command_list (void);
+int make_timer (timer_s_t *tst);
+void stop_timer (timer_t t_id);
+
 #endif /* _P2P_UTILS_H_ */
