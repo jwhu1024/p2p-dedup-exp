@@ -1,7 +1,7 @@
 #ifndef _P2P_CMD_HANDLER_H_
 #define _P2P_CMD_HANDLER_H_
 
-#include "zyre.h"
+#include "p2p-common.h"
 
 typedef struct node_info {
 	zyre_t *node;

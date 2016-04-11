@@ -1,21 +1,29 @@
 #include <stdio.h>
 
-#include "p2p-utils.h"
 #include "p2p-cmd-handler.h"
 
-bool terminated = false;
+extern const char *HEADER_VALUE;
 extern const char *P2P_GROUP_NAME;
+extern sp_info_t sp_info;
+
+bool terminated = false;
+char sp_peer[32] = {0};
 
 int process_terminate 	(zyre_t *node, zmsg_t *msg);
 int process_shout 		(zyre_t *node, zmsg_t *msg);
 int process_whisper 	(zyre_t *node, zmsg_t *msg);
 int query_online_peers 	(zyre_t *node, zmsg_t *msg);
+int sp_notify_peers		(zyre_t *node, zmsg_t *msg);
+int process_set_sp 		(zyre_t *node, zmsg_t *msg);
+int process_start 		(zyre_t *node, zmsg_t *msg);
 
 user_cmd_table_t user_op_func_tbl[] = {
 	{	"$TERM",		process_terminate 	},
 	{	"SHOUT",		process_shout	 	},
 	{	"WHISPER",		process_whisper	 	},
 	{	"QUERY",		query_online_peers 	},
+	{	"SETSP",		process_set_sp	 	},
+	{	"START",		process_start	 	},
 	{	"",				NULL	 			}
 };
 
@@ -52,17 +60,44 @@ int process_whisper (zyre_t *node, zmsg_t *msg)
 
 int query_online_peers (zyre_t *node, zmsg_t *msg)
 {
+	int peers = 0;
 	zlist_t *plist = zyre_peers (node);
 	int sz = (int) zlist_size (plist);
 
 	if (sz > 0) {
+#ifdef __DEBUG__
 		while (zlist_next(plist) != NULL) {
-			char *tmp = zlist_pop (plist);
-			DBG ("peer %s\n", tmp);
+			DBG ("peer %s\n", (char *) zlist_pop (plist));
+			peers++;
 		}	
+#endif
 	} else {
 		DBG ("No peers online\n");
 	}
+
+	DBG ("SuperPeer : %s\n", sp_info.sp_peer);
+	DBG ("Own : %d\n", sp_info.own);
 	
+	return peers;
+}
+
+int process_set_sp (zyre_t *node, zmsg_t *msg)
+{
+	/* Set this header to indicate we're superpeer */
+	if (sp_info.sp_peer[0] == '\0') {
+		zyre_set_header (node, "X-HEADER", HEADER_VALUE);
+		DBG ("Set headers as %s\n", HEADER_VALUE);
+	}
+
+	sp_info.own = 1;
+	return 1;
+}
+
+int process_start (zyre_t *node, zmsg_t *msg)
+{
+	DBG ("\n");
+	// zyre_shouts (node, P2P_GROUP_NAME, "%s", "HELLO EVERYBODY");
+
+
 	return 1;
 }

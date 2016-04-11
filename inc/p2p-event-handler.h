@@ -1,7 +1,10 @@
 #ifndef _P2P_HANDLER_H_
 #define _P2P_HANDLER_H_
 
+#include "p2p-common.h"
+
 typedef struct req_info {
+	zyre_t *node;
 	char *event;
 	char *peer;
 	char *name;

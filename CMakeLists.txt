@@ -34,7 +34,7 @@ add_executable(p2p-dedup
 	./src/p2p-main.c
 	./src/p2p-cmd-handler.c
 	./src/p2p-event-handler.c
-	./src/p2p-utils.c
+	./src/p2p-common.c
 )
 
 # setting library to link

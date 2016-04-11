@@ -1,7 +1,10 @@
 #include <stdio.h>
 
-#include "p2p-utils.h"
 #include "p2p-event-handler.h"
+
+extern sp_info_t sp_info;
+extern const char *HEADER_VALUE;
+extern const char *P2P_GROUP_NAME;
 
 int event_enter_handler 	(req_info_t *info);
 int event_evasive_handler 	(req_info_t *info);
@@ -34,6 +37,24 @@ void free_mem (req_info_t *info)
 int event_enter_handler (req_info_t *info)
 {
 	DBG ("%s%s has joined the chat%s\n", YELLOW, info->name, RESET);
+	char *header = zyre_peer_header_value (info->node, info->peer, "X-HEADER");
+
+	if (header != NULL) {
+#if 0 //def __DEBUG__
+		DBG ("%sNAME: %s%s\n", YELLOW, info->name, RESET);
+		DBG ("%sPEER: %s%s\n", YELLOW, info->peer, RESET);
+		DBG ("%sGROUP: %s%s\n", YELLOW, info->group, RESET);
+		DBG ("%sMESSAGE: %s%s\n", YELLOW, info->message, RESET);
+		DBG ("%sHEADER: %s%s\n", YELLOW, header, RESET);
+#endif
+		if (strcmp (header, HEADER_VALUE) == 0) {
+			sprintf (sp_info.sp_peer, "%s", info->peer);
+			DBG ("%s%s is a superpeer: %s%s\n", YELLOW, info->name, sp_info.sp_peer, RESET);
+		}
+	} else {
+		DBG ("%sHEADER: NOT FOUND%s\n", YELLOW, RESET);
+	}
+
 	free_mem(info);
 	return 1;
 }
@@ -54,12 +75,14 @@ int event_exit_handler (req_info_t *info)
 
 int event_join_handler (req_info_t *info)
 {
+	DBG ("%s%s: join %s group%s\n", LIGHT_BLUE, info->name, info->group, RESET);
 	free_mem(info);
 	return 1;
 }
 
 int event_leave_handler (req_info_t *info)
 {
+	DBG ("%s%s: leave %s group%s\n", LIGHT_BLUE, info->name, info->group, RESET);
 	free_mem(info);
 	return 1;
 }
@@ -80,22 +103,15 @@ int event_shout_handler (req_info_t *info)
 
 int process_event_msg (zmsg_t *msg, req_info_t *info)
 {
-	info->event 	= zmsg_popstr (msg);		// event
-	info->peer 		= zmsg_popstr (msg);		// peer
-	info->name 		= zmsg_popstr (msg);		// name
+	info->event 		= zmsg_popstr (msg);		// event
+	info->peer 			= zmsg_popstr (msg);		// peer
+	info->name 			= zmsg_popstr (msg);		// name
 
 	if (strcmp(info->event, "WHISPER") != 0)
 		info->group 	= zmsg_popstr (msg);	// group
 
 	if (strcmp(info->event, "JOIN") != 0)
 		info->message 	= zmsg_popstr (msg);	// message
-
-	DBG("[EV] -------------------------\n");
-	DBG("[EV] event : %s\n", 	info->event);
-	DBG("[EV] peer : %s\n", 	info->peer);
-	DBG("[EV] name : %s\n", 	info->name);
-	DBG("[EV] group : %s\n", 	info->group);
-	DBG("[EV] message : %s\n", 	info->message);
 
 	return 1;
 }
