@@ -14,4 +14,6 @@ typedef struct zyre_cmd_table {
 	int (*EV_HANDLER) (req_info_t *info);
 } zyre_cmd_table_t;
 
+int process_event_msg (zmsg_t *msg, req_info_t *info);
+
 #endif /* _P2P_HANDLER_H_ */

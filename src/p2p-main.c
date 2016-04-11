@@ -87,22 +87,11 @@ static void dedup_actor (zsock_t *pipe, void *args)
 			req_info_t ri;
 			memset(&ri, '\0', sizeof(req_info_t));
 
-			/* below should be fine tune by event */
-			ri.event 	= zmsg_popstr (msg);
-			ri.peer 	= zmsg_popstr (msg);
-			ri.name 	= zmsg_popstr (msg);
-			if (strcmp(ri.event, "SHOUT") == 0	||
-				strcmp(ri.event, "JOIN") == 0)
-				ri.group 	= zmsg_popstr (msg);
-			ri.message 	= zmsg_popstr (msg);
-			/* below should be fine tune by event */
+#ifdef __DEBUG__
+			zmsg_dump (msg);
+#endif /* __DEBUG__ */
 
-			DBG("[EV] -------------------------\n");
-			DBG("[EV] event : %s\n", ri.event);
-			DBG("[EV] peer : %s\n", ri.peer);
-			DBG("[EV] name : %s\n", ri.name);
-			DBG("[EV] group : %s\n", ri.group);
-			DBG("[EV] message : %s\n", ri.message);
+			process_event_msg (msg, &ri);
 
 			zyre_cmd_table_t *t = zyre_op_func_tbl;
 			while (t->event[0] != '\0') {

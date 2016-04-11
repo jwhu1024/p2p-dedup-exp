@@ -77,3 +77,25 @@ int event_shout_handler (req_info_t *info)
 	free_mem(info);
 	return 1;
 }
+
+int process_event_msg (zmsg_t *msg, req_info_t *info)
+{
+	info->event 	= zmsg_popstr (msg);		// event
+	info->peer 		= zmsg_popstr (msg);		// peer
+	info->name 		= zmsg_popstr (msg);		// name
+
+	if (strcmp(info->event, "WHISPER") != 0)
+		info->group 	= zmsg_popstr (msg);	// group
+
+	if (strcmp(info->event, "JOIN") != 0)
+		info->message 	= zmsg_popstr (msg);	// message
+
+	DBG("[EV] -------------------------\n");
+	DBG("[EV] event : %s\n", 	info->event);
+	DBG("[EV] peer : %s\n", 	info->peer);
+	DBG("[EV] name : %s\n", 	info->name);
+	DBG("[EV] group : %s\n", 	info->group);
+	DBG("[EV] message : %s\n", 	info->message);
+
+	return 1;
+}
