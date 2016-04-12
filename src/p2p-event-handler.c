@@ -34,7 +34,7 @@ void free_mem (req_info_t *info)
 	if (info->message)	free(info->message);
 }
 
-void parse_whisper_message (char *message)
+static void parse_whisper_message (char *message)
 {
 	if (strncmp ("SP-", message, 3) == 0) {
 		sscanf (message, "SP-%s", sp_info.sp_peer);

@@ -90,6 +90,7 @@ int process_set_sp (zyre_t *node, zmsg_t *msg)
 	if (sp_info.sp_peer[0] == '\0' && sp_info.own == 0) {
 		zyre_set_header (node, "X-HEADER", HEADER_VALUE);
 		DBG ("Set headers as %s\n", HEADER_VALUE);
+		
 		sp_info.own = 1;
 	
 		/* notify other peers I'm superpeer */

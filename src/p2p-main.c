@@ -4,6 +4,7 @@
 #include "p2p-cmd-handler.h"
 #include "p2p-event-handler.h"
 #include "p2p-common.h"
+#include "p2p-encrypt.h"
 
 #define NODE_NAME_PREFIX	"cli-"
 #define LAN_IFACE			"eth1"

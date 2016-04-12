@@ -12,3 +12,33 @@ void print_command_list (void)
 	printf("[5]\t\tSTART\t\tStart Test Process\n");
 	printf("-----------------------------------------\n");
 }
+
+int _system (const char *fmt, ...)
+{
+	va_list args;
+	int i;
+	char buf[512];
+
+	memset(buf, 0x0, 512);
+	va_start(args, fmt);
+	i = vsprintf(buf, fmt, args);
+	va_end(args);
+
+	system(buf);
+	return i;
+}
+
+int p_run_command (char *c, char *v)
+{
+	FILE *fp = NULL;
+	char buf[256] = {0};
+
+	memset (buf, 0x0, sizeof(buf));
+	fp = popen (c, "r");
+	fread(buf, sizeof(char), sizeof(buf), fp);
+	pclose (fp);
+	buf[strlen(buf) - 1] = '\0';
+	strncpy(v, buf, sizeof(buf) - 1 );
+
+	return strlen(v);
+}

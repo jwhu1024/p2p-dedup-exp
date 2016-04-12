@@ -45,5 +45,7 @@ typedef struct {
 
 
 void print_command_list (void);
+int p_run_command (char *c, char *v);
+int _system (const char *fmt, ...);
 
 #endif /* _P2P_UTILS_H_ */
