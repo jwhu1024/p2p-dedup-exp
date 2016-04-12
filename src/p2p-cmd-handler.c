@@ -45,8 +45,8 @@ int process_shout (zyre_t *node, zmsg_t *msg)
 
 int process_whisper (zyre_t *node, zmsg_t *msg)
 {
-	char *peer = zmsg_popstr (msg);
-	char *message = zmsg_popstr (msg);
+	char *peer 		= zmsg_popstr (msg);
+	char *message 	= zmsg_popstr (msg);
 
 	DBG("peer: %s, message: %s\n", peer, message);
 
@@ -69,7 +69,7 @@ int query_online_peers (zyre_t *node, zmsg_t *msg)
 		while (zlist_next(plist) != NULL) {
 			DBG ("peer %s\n", (char *) zlist_pop (plist));
 			peers++;
-		}	
+		}
 #endif
 	} else {
 		DBG ("No peers online\n");
@@ -83,21 +83,38 @@ int query_online_peers (zyre_t *node, zmsg_t *msg)
 
 int process_set_sp (zyre_t *node, zmsg_t *msg)
 {
-	/* Set this header to indicate we're superpeer */
+	/* Set this header to indicate we're superpeer 
+	   other peers will receive this header when join
+	   the same group.
+	*/
 	if (sp_info.sp_peer[0] == '\0' && sp_info.own == 0) {
 		zyre_set_header (node, "X-HEADER", HEADER_VALUE);
 		DBG ("Set headers as %s\n", HEADER_VALUE);
 		sp_info.own = 1;
-	}
+	
+		/* notify other peers I'm superpeer */
+		zlist_t *list = zyre_peers (node);
+		while  (zlist_next(list) != NULL) {
+			char *online_peer = (char *) zlist_pop (list);
+			DBG ("online_peer %s\n", online_peer);
+			
+			zmsg_t *lmsg = zmsg_new ();
+			zmsg_pushstrf  	(lmsg, "SP-%s", zyre_uuid (node));
+			zmsg_pushstr 	(lmsg, online_peer);
+			process_whisper (node, lmsg);
+			zmsg_destroy 	(&lmsg);
 
+			if (online_peer)	free (online_peer);
+		}
+		zlist_destroy (&list);
+	} else {
+		DBG ("Do nothing...superpeer exists\n");
+	}
 	return 1;
 }
 
 int process_start (zyre_t *node, zmsg_t *msg)
 {
 	DBG ("\n");
-	// zyre_shouts (node, P2P_GROUP_NAME, "%s", "HELLO EVERYBODY");
-
-
 	return 1;
 }
