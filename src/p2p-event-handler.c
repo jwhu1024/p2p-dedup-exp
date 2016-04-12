@@ -44,7 +44,7 @@ void parse_whisper_message (char *message)
 
 int event_enter_handler (req_info_t *info)
 {
-	DBG ("%s%s has joined the chat%s\n", YELLOW, info->name, RESET);
+	DBG ("%s%s has joined the group%s\n", YELLOW, info->name, RESET);
 	char *header = zyre_peer_header_value (info->node, info->peer, "X-HEADER");
 
 	if (header != NULL) {
@@ -76,7 +76,13 @@ int event_evasive_handler (req_info_t *info)
 
 int event_exit_handler (req_info_t *info)
 {
-	DBG ("%s%s has left the chat%s\n", YELLOW, info->name, RESET);
+	DBG ("%s%s has left the group%s\n", YELLOW, info->name, RESET);
+
+	/* clear superpeer record if superpeer left */
+	if (strncmp (info->peer, sp_info.sp_peer, sizeof (sp_info.sp_peer)) == 0) {
+		memset (sp_info.sp_peer, '\0', sizeof (sp_info.sp_peer));
+	}
+
 	free_mem(info);
 	return 1;
 }
@@ -117,10 +123,10 @@ int process_event_msg (zmsg_t *msg, req_info_t *info)
 	info->name 			= zmsg_popstr (msg);		// name
 
 	if (strcmp(info->event, "WHISPER") != 0)
-		info->group 	= zmsg_popstr (msg);	// group
+		info->group 	= zmsg_popstr (msg);		// group
 
 	if (strcmp(info->event, "JOIN") != 0)
-		info->message 	= zmsg_popstr (msg);	// message
+		info->message 	= zmsg_popstr (msg);		// message
 
 	return 1;
 }
