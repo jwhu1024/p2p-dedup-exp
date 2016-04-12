@@ -1,24 +1,7 @@
 #include <stdio.h>
-#include <openssl/sha.h>
-
 #include "p2p-encrypt.h"
 
 #define TMP_HASH_FILE		"/tmp/dedup-hash"
-
-///////////////////////////////////////////////
-// Usage
-// unsigned char hash[SHA256_HASH_LENGTH] = {0};
-// create_sha256_hash ("/vagrant/a", hash);
-// dump_hash (hash, SHA256_HASH_LENGTH);
-
-// unsigned char sha1hash[SHA1_HASH_LENGTH] = {0};
-// create_sha1_hash (hash, sha1hash);
-// dump_hash (sha1hash, SHA1_HASH_LENGTH);
-
-// DBG ("hash[0] : %c\n", hash[0]);
-// DBG ("hash[1] : %c\n", hash[1]);
-// DBG ("hash[2] : %c\n", hash[2]);
-///////////////////////////////////////////////
 
 void create_sha1_hash (unsigned char *sha256_hash, unsigned char *outhash)
 {
@@ -35,7 +18,7 @@ void create_sha1_hash (unsigned char *sha256_hash, unsigned char *outhash)
 
 	memcpy (outhash, hash, SHA1_HASH_LENGTH);
 
-#if 1
+#if 0
 	DBG ("cmd: %s\n", cmd);
 	DBG ("value: %s\n", value);
 	DBG ("outhash: %s\n", outhash);
@@ -58,7 +41,7 @@ void create_sha256_hash (char *filename, unsigned char *outhash)
 
 	memcpy (outhash, hash, SHA256_HASH_LENGTH);
 
-#if 1
+#if 0
 	DBG ("cmd: %s\n", cmd);
 	DBG ("value: %s\n", value);
 	DBG ("outhash: %s\n", outhash);
@@ -74,5 +57,46 @@ void dump_hash (unsigned char *hash, int len)
 	for (cl = 0; cl < len; cl++)
 		printf ("%c", hash[cl]);
 	putchar ('\n');
+	return;
+}
+
+static char * const quads[] = { "0000", "0001", "0010", "0011",
+                                "0100", "0101", "0110", "0111",
+                                "1000", "1001", "1010", "1011",
+                                "1100", "1101", "1110", "1111",
+                              };
+
+static char * hex_to_bin_quad (unsigned char c)
+{
+	if (c >= '0' && c <= '9') return quads[     c - '0'];
+	if (c >= 'A' && c <= 'F') return quads[10 + c - 'A'];
+	if (c >= 'a' && c <= 'f') return quads[10 + c - 'a'];
+	return NULL;
+}
+
+void hash_test (void)
+{
+	// Usage
+	unsigned char hash[SHA256_HASH_LENGTH] = {0};
+	create_sha256_hash ("/vagrant/a", hash);
+	dump_hash (hash, SHA256_HASH_LENGTH);
+
+	unsigned char sha1hash[SHA1_HASH_LENGTH] = {0};
+	create_sha1_hash (hash, sha1hash);
+	dump_hash (sha1hash, SHA1_HASH_LENGTH);
+
+	// DBG ("hash[0] : %c\n", hash[0]);
+	// DBG ("hash[1] : %c\n", hash[1]);
+	// DBG ("hash[2] : %c\n", hash[2]);
+
+	int i;
+	char bsh[SHORT_HASH_LENGTH * 4 + 1] = {0};
+	for (i = 0; i < SHORT_HASH_LENGTH; i++) {
+		char *bstr = hex_to_bin_quad (hash[i]);
+		if (bstr) {
+			strncat (bsh, bstr, 4);
+		}
+	}
+	DBG ("bsh : %s\n", bsh);
 	return;
 }

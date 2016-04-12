@@ -39,4 +39,4 @@ add_executable(p2p-dedup
 )
 
 # setting library to link
-target_link_libraries(p2p-dedup libzyre.so libzmq.so libczmq.so libpthread.so librt.so libcrypto.so)
+target_link_libraries(p2p-dedup libzyre.so libzmq.so libczmq.so libpthread.so librt.so)
