@@ -34,6 +34,14 @@ void free_mem (req_info_t *info)
 	if (info->message)	free(info->message);
 }
 
+void parse_whisper_message (char *message)
+{
+	if (strncmp ("SP-", message, 3) == 0) {
+		sscanf (message, "SP-%s", sp_info.sp_peer);
+		DBG ("sp_peer: %s\n", sp_info.sp_peer);
+	}
+}
+
 int event_enter_handler (req_info_t *info)
 {
 	DBG ("%s%s has joined the chat%s\n", YELLOW, info->name, RESET);
@@ -90,11 +98,7 @@ int event_leave_handler (req_info_t *info)
 int event_whisper_handler (req_info_t *info)
 {
 	DBG ("%s%s: %s%s\n", RED, info->name, info->message, RESET);
-
-	if (strncmp ("SP-", info->message, 3) == 0) {
-		sscanf (info->message, "SP-%s", sp_info.sp_peer);
-		DBG ("sp_peer: %s\n", sp_info.sp_peer);
-	}
+	parse_whisper_message (info->message);
 	free_mem(info);
 	return 1;
 }
