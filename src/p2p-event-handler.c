@@ -36,8 +36,8 @@ void free_mem (req_info_t *info)
 
 static void parse_whisper_message (char *message)
 {
-	if (strncmp ("SP-", message, 3) == 0) {
-		sscanf (message, "SP-%s", sp_info.sp_peer);
+	if (strncmp (SP_HEADER, message, strlen(SP_HEADER)) == 0) {
+		sprintf (sp_info.sp_peer, "%s", message+strlen(SP_HEADER)+1);
 		DBG ("sp_peer: %s\n", sp_info.sp_peer);
 	}
 }

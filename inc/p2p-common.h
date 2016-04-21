@@ -25,6 +25,7 @@
 #define WHITE 			"\033[1;37m"
 #define RESET 			"\033[0m"
 
+#define SP_HEADER		"SP"
 #define __SHORT_FILE__ ((strrchr(__FILE__, '/'))?  strrchr(__FILE__, '/') + 1 : __FILE__)
 
 #ifdef __DEBUG__

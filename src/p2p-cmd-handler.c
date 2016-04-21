@@ -100,7 +100,7 @@ int process_set_sp (zyre_t *node, zmsg_t *msg)
 			DBG ("online_peer %s\n", online_peer);
 			
 			zmsg_t *lmsg = zmsg_new ();
-			zmsg_pushstrf  	(lmsg, "SP-%s", zyre_uuid (node));
+			zmsg_pushstrf  	(lmsg, "%s-%s", SP_HEADER, zyre_uuid (node));
 			zmsg_pushstr 	(lmsg, online_peer);
 			process_whisper (node, lmsg);
 			zmsg_destroy 	(&lmsg);

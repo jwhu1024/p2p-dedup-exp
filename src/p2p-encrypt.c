@@ -3,6 +3,12 @@
 
 #define TMP_HASH_FILE		"/tmp/dedup-hash"
 
+static char * const quads[] = { "0000", "0001", "0010", "0011",
+                                "0100", "0101", "0110", "0111",
+                                "1000", "1001", "1010", "1011",
+                                "1100", "1101", "1110", "1111",
+                              };
+
 // create sha1 hash based on hash of sha256
 void create_sha1_hash (unsigned char *sha256_hash, unsigned char *outhash)
 {
@@ -60,12 +66,6 @@ void dump_hash (unsigned char *hash, int len)
 	putchar ('\n');
 	return;
 }
-
-static char * const quads[] = { "0000", "0001", "0010", "0011",
-                                "0100", "0101", "0110", "0111",
-                                "1000", "1001", "1010", "1011",
-                                "1100", "1101", "1110", "1111",
-                              };
 
 static char * hex_to_bin_quad (unsigned char c)
 {
