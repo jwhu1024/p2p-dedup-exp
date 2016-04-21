@@ -3,6 +3,7 @@
 
 #define TMP_HASH_FILE		"/tmp/dedup-hash"
 
+// create sha1 hash based on hash of sha256
 void create_sha1_hash (unsigned char *sha256_hash, unsigned char *outhash)
 {
 	char cmd[128] = {0};
@@ -90,13 +91,16 @@ void hash_test (void)
 	// DBG ("hash[2] : %c\n", hash[2]);
 
 	int i;
-	char bsh[SHORT_HASH_LENGTH * 4 + 1] = {0};
+	char short_hash[SHORT_HASH_LENGTH * 4 + 1] = {0};
 	for (i = 0; i < SHORT_HASH_LENGTH; i++) {
 		char *bstr = hex_to_bin_quad (hash[i]);
 		if (bstr) {
-			strncat (bsh, bstr, 4);
+			strncat (short_hash, bstr, 4);
 		}
 	}
-	DBG ("bsh : %s\n", bsh);
+	DBG ("short_hash : %s\n", short_hash);
+
+	int is_valid = is_valid_short_hash (short_hash);
+	DBG ("is_valid: %d\n", is_valid);
 	return;
 }

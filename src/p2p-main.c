@@ -132,6 +132,10 @@ int main (int argc, char *argv [])
 	zactor_t *d_actor = zactor_new (dedup_actor, node_name);
 	assert (d_actor);
 
+#ifdef __DEBUG__
+	hash_test();
+#endif
+
 	while (!zsys_interrupted) {
 		char command [16] = {0};
 		char message [MAX_MSG_LEN] = {0};

@@ -42,3 +42,16 @@ int p_run_command (char *c, char *v)
 
 	return strlen(v);
 }
+
+int is_valid_short_hash (char sh[])
+{
+	int i;
+	for (i = 0; i < strlen (sh); ++i) {
+		if (sh[i] != '0' && sh[i] != '1') {
+			printf("sh[%d] %c not 0 or 1\n", i, sh[i]);
+			return 0;
+		}
+	}
+
+	return 1;
+}
