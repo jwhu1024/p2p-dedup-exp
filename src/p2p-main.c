@@ -133,7 +133,7 @@ int main (int argc, char *argv [])
 	assert (d_actor);
 
 #ifdef __DEBUG__
-	hash_test();
+	// hash_test();
 #endif
 
 	while (!zsys_interrupted) {

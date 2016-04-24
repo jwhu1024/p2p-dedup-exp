@@ -1,13 +1,16 @@
 #include <stdio.h>
 
 #include "p2p-cmd-handler.h"
+#include "p2p-encrypt.h"
 
 extern const char *HEADER_VALUE;
 extern const char *P2P_GROUP_NAME;
 extern sp_info_t sp_info;
 
 bool terminated = false;
-char sp_peer[32] = {0};
+
+/* local helper functions */
+static void send_whisper_msg (zyre_t *node,char *msg, char *dest_peer);
 
 int process_terminate 	(zyre_t *node, zmsg_t *msg);
 int process_shout 		(zyre_t *node, zmsg_t *msg);
@@ -77,33 +80,34 @@ int query_online_peers (zyre_t *node, zmsg_t *msg)
 
 	DBG ("SuperPeer : %s\n", sp_info.sp_peer);
 	DBG ("Own : %d\n", sp_info.own);
-	
+
 	return peers;
 }
 
 int process_set_sp (zyre_t *node, zmsg_t *msg)
 {
-	/* Set this header to indicate we're superpeer 
+	sp_info_t *sp_p = &sp_info;
+
+	/* Set this header to indicate we're superpeer
 	   other peers will receive this header when join
 	   the same group.
 	*/
-	if (sp_info.sp_peer[0] == '\0' && sp_info.own == 0) {
+	if (sp_p->sp_peer[0] == '\0' && sp_p->own == 0) {
 		zyre_set_header (node, "X-HEADER", HEADER_VALUE);
 		DBG ("Set headers as %s\n", HEADER_VALUE);
-		
-		sp_info.own = 1;
-	
+
+		snprintf (sp_p->sp_peer, SP_PEER_UUID_LENGTH + 1, "%s", zyre_uuid (node));
+		sp_p->own = 1;
+
 		/* notify other peers I'm superpeer */
 		zlist_t *list = zyre_peers (node);
 		while  (zlist_next(list) != NULL) {
 			char *online_peer = (char *) zlist_pop (list);
 			DBG ("online_peer %s\n", online_peer);
-			
-			zmsg_t *lmsg = zmsg_new ();
-			zmsg_pushstrf  	(lmsg, "%s-%s", SP_HEADER, zyre_uuid (node));
-			zmsg_pushstr 	(lmsg, online_peer);
-			process_whisper (node, lmsg);
-			zmsg_destroy 	(&lmsg);
+
+			char msg_to_send[MSG_TRANS_LENGTH] = {0};
+			sprintf (msg_to_send, "%s-%s", CMD_SP, zyre_uuid (node));
+			send_whisper_msg (node, msg_to_send, online_peer);
 
 			if (online_peer)	free (online_peer);
 		}
@@ -116,6 +120,35 @@ int process_set_sp (zyre_t *node, zmsg_t *msg)
 
 int process_start (zyre_t *node, zmsg_t *msg)
 {
+	sp_info_t *sp_p = &sp_info;
+
+	if (sp_p->sp_peer[0] == '\0') {
+		DBG ("%sCan't do OPRF before we known who is the sp, discard it! %s\n", LIGHT_RED, RESET);
+		return 0;
+	}
+
+	if (strncmp (sp_p->sp_peer, zyre_uuid (node), SP_PEER_UUID_LENGTH) == 0) {
+		DBG ("%sCan't do OPRF with ourself, discard it!%s\n", LIGHT_RED, RESET);
+		return 0;
+	}
+
+	unsigned char short_hash[13];
+	short_hash_calc ("/vagrant/a", short_hash);
+
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+	sprintf (msg_to_send, "%s-%s-%s", CMD_SSU, short_hash, zyre_uuid (node));	
+	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
+
 	DBG ("\n");
 	return 1;
+}
+
+static void send_whisper_msg (zyre_t *node,char *msg, char *dest_peer)
+{
+	zmsg_t *lmsg = zmsg_new ();
+	zmsg_pushstrf  	(lmsg, "%s", msg);
+	zmsg_pushstr 	(lmsg, dest_peer);
+	process_whisper (node, lmsg);
+	zmsg_destroy 	(&lmsg);
+	return;
 }
