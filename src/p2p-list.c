@@ -5,54 +5,60 @@
 #include "p2p-list.h"
 #include "p2p-common.h"
 
-#define L_DEBUG		0
+#define L_DEBUG		1
 
-struct ip_list_struct *head = NULL;
-struct ip_list_struct *curr = NULL;
+struct sh_tbl *head = NULL;
+struct sh_tbl *curr = NULL;
 
-struct ip_list_struct* create_list (char *ip)
+/*
+	unsigned char short_hash[SHORT_HASH_LENGTH];
+	char uuid[SP_PEER_UUID_LENGTH];
+*/
+struct sh_tbl* create_list (char *uuid, unsigned char *sh)
 {
+	// 	DBG ("new.uuid: %s\n", uuid);
+	// DBG ("new.short_hash: %s\n", sh);
 	if (L_DEBUG)
-		_dbg("Creating list with headnode as [%s]\n", ip);
+		DBG ("Creating list with headnode as [%s] - uuid [%s]\n", uuid, sh);
 
-	struct ip_list_struct *ptr = (struct ip_list_struct*) malloc (sizeof (struct ip_list_struct));
+	struct sh_tbl *ptr = (struct sh_tbl*) malloc (sizeof (struct sh_tbl));
 	if (NULL == ptr) {
-		_dbg("Node creation failed \n");
+		DBG ("Node creation failed \n");
 		return NULL;
 	}
 
-	memcpy(ptr->ipaddr, ip, strlen(ip) + 1);
-	ptr->ts = time(NULL);
-	ptr->isSuper = false;
+	memcpy(ptr->uuid, uuid, SP_PEER_UUID_LENGTH);
+	memcpy(ptr->short_hash, sh, SHORT_HASH_LENGTH);
 	ptr->next = NULL;
-
+	
 	head = curr = ptr;
 	return ptr;
 }
 
-struct ip_list_struct* list_add (struct ip_list_struct* ip_s, bool add_to_end)
+struct sh_tbl* list_add (struct sh_tbl* sh_tbl, bool add_to_end)
 {
+	// DBG ("new.uuid: %s\n", sh_tbl->uuid);
+	// DBG ("new.short_hash: %s\n", sh_tbl->short_hash);
 	if (NULL == head) {
-		return (create_list(ip_s->ipaddr));
+		return (create_list(sh_tbl->uuid, sh_tbl->short_hash));
 	}
 
 	if (L_DEBUG) {
 		if (add_to_end)
-			_dbg("Adding node to end of list with value [%s]\n", ip_s->ipaddr);
+			DBG ("Adding node to end of list with value [%s]\n", sh_tbl->uuid);
 		else
-			_dbg("Adding node to beginning of list with value [%s]\n", ip_s->ipaddr);
+			DBG ("Adding node to beginning of list with value [%s]\n", sh_tbl->uuid);
 	}
 
-	struct ip_list_struct *ptr = (struct ip_list_struct*) malloc (sizeof (struct ip_list_struct));
+	struct sh_tbl *ptr = (struct sh_tbl*) malloc (sizeof (struct sh_tbl));
 	if (NULL == ptr) {
-		_dbg("Node creation failed \n");
+		DBG ("Node creation failed \n");
 		return NULL;
 	}
 
-	memcpy(ptr->ipaddr, ip_s->ipaddr, strlen(ip_s->ipaddr) + 1);
-	ptr->ts      = ip_s->ts;
-	ptr->isSuper = ip_s->isSuper;
-	ptr->next    = NULL;
+	memcpy(ptr->uuid, sh_tbl->uuid, SP_PEER_UUID_LENGTH);
+	memcpy(ptr->short_hash, sh_tbl->short_hash, SHORT_HASH_LENGTH);
+	ptr->next = NULL;
 
 	if (add_to_end) {
 		curr->next = ptr;
@@ -64,17 +70,17 @@ struct ip_list_struct* list_add (struct ip_list_struct* ip_s, bool add_to_end)
 	return ptr;
 }
 
-struct ip_list_struct* list_search_by_ip (char *ip, struct ip_list_struct **prev)
+struct sh_tbl* list_search_by_shorthash (char *sh, struct sh_tbl **prev)
 {
-	struct ip_list_struct *ptr = head;
-	struct ip_list_struct *tmp = NULL;
+	struct sh_tbl *ptr = head;
+	struct sh_tbl *tmp = NULL;
 	bool found = false;
 
 	if (L_DEBUG)
-		_dbg("Searching the list for value [%s] \n", ip);
+		DBG ("Searching the list for value [%s] \n", sh);
 
 	while (ptr != NULL) {
-		if (strcmp(ptr->ipaddr, ip) == 0) {
+		if (strcmp((char *) ptr->short_hash, sh) == 0) {
 			found = true;
 			break;
 		} else {
@@ -92,17 +98,17 @@ struct ip_list_struct* list_search_by_ip (char *ip, struct ip_list_struct **prev
 	}
 }
 
-int list_delete_by_ip (char *ip)
+int list_delete_by_shorthash (char *sh)
 {
-	struct ip_list_struct *prev = NULL;
-	struct ip_list_struct *del = NULL;
+	struct sh_tbl *prev = NULL;
+	struct sh_tbl *del = NULL;
 
 	if (L_DEBUG)
-		_dbg("Deleting value [%s] from list\n", ip);
+		DBG ("Deleting value [%s] from list\n", sh);
 
-	del = list_search_by_ip(ip, &prev);
+	del = list_search_by_shorthash (sh, &prev);
 	if (del == NULL) {
-		_dbg("[%s] Not found in list\n", ip);
+		DBG ("[%s] Not found in list\n", sh);
 		return -1;
 	} else {
 		if (prev != NULL)
@@ -123,7 +129,7 @@ int list_delete_by_ip (char *ip)
 
 void list_free (void)
 {
-	struct ip_list_struct* tmp;
+	struct sh_tbl* tmp;
 
 	while (head != NULL) {
 		tmp = head;
@@ -132,29 +138,28 @@ void list_free (void)
 	}
 
 	if (L_DEBUG)
-		_dbg("list_free done \n");
+		DBG ("list_free done \n");
 }
 
 void list_display (void)
 {
-	struct ip_list_struct *ptr = head;
+	struct sh_tbl *ptr = head;
 
 	if (L_DEBUG)
-		_dbg("%s--------- Printing list Start ---------%s\n", LIGHT_GREEN, RESET);
+		DBG ("%s--------- Printing list Start ---------%s\n", LIGHT_GREEN, RESET);
 
 	while (ptr != NULL)
 	{
 		if (L_DEBUG) {
-			_dbg("%s------------------------%s\n", LIGHT_GREEN, RESET);
-			_dbg("%sip -> %s%s\n", LIGHT_GREEN, ptr->ipaddr, RESET);
-			_dbg("%sisSuper -> %s%s\n", LIGHT_GREEN, (ptr->isSuper == true) ? "true" : "false", RESET);
-			_dbg("%stimestamp -> %d%s\n", LIGHT_GREEN, (int) ptr->ts, RESET);
+			DBG ("%s------------------------%s\n", LIGHT_GREEN, RESET);
+			DBG ("%suuid -> %s%s\n", LIGHT_GREEN, ptr->uuid, RESET);
+			DBG ("%sshorthash -> %s%s\n", LIGHT_GREEN, ptr->short_hash, RESET);
 		}
 		ptr = ptr->next;
 	}
 
 	if (L_DEBUG)
-		_dbg("%s--------- Printing list End -----------%s\n\n", LIGHT_GREEN, RESET);
+		DBG ("%s--------- Printing list End -----------%s\n\n", LIGHT_GREEN, RESET);
 
 	return;
 }
@@ -162,7 +167,7 @@ void list_display (void)
 int list_count ()
 {
 	int num = 0;
-	struct ip_list_struct *ptr = head;
+	struct sh_tbl *ptr = head;
 
 	while (ptr != NULL) {
 		ptr = ptr->next;
@@ -170,69 +175,119 @@ int list_count ()
 	}
 
 	if (L_DEBUG)
-		_dbg("List have %d ip\n\n", num);
+		DBG ("List have %d ip\n\n", num);
 
 	return num;
 }
 
-char *list_get_ip_by_index (int idx)
+// char *list_get_ip_by_index (int idx)
+// {
+// 	int num = 0;
+// 	struct sh_tbl *ptr = head;
+
+// 	while (ptr != NULL) {
+// 		if (idx == num++) {
+// 			return ptr->ipaddr;
+// 		}
+// 		ptr = ptr->next;
+// 	}
+// 	return NULL;
+// }
+
+// void list_check_timestamp (time_t cur_time, int threshold)
+// {
+// 	struct sh_tbl *ptr = head;
+
+// 	while (ptr != NULL) {
+// 		time_t diff = cur_time - ptr->ts;
+// 		if (diff >= threshold) {
+// 			DBG ("%s%s LEAVE%s\n", YELLOW, ptr->ipaddr, RESET);
+// 			list_delete_by_shorthash(ptr->ipaddr);
+// 		}
+// 		ptr = ptr->next;
+// 	}
+// 	return;
+// }
+
+#if 0 //def __DEBUG__
+
+#include "p2p-encrypt.h"
+
+int list_self_test (void)
 {
-	int num = 0;
-	struct ip_list_struct *ptr = head;
+	// int ret = 0;
 
-	while (ptr != NULL) {
-		if (idx == num++) {
-			return ptr->ipaddr;
-		}
-		ptr = ptr->next;
-	}
-	return NULL;
-}
+	struct sh_tbl *ptr = NULL;
+	struct sh_tbl new;
 
-void list_check_timestamp (time_t cur_time, int threshold)
-{
-	struct ip_list_struct *ptr = head;
+	memset(&new, 0, sizeof(struct sh_tbl));
+	memcpy(new.uuid, "B7D1CD4BC21AFEF754108FD06A9D8647", SP_PEER_UUID_LENGTH);
+	memcpy(new.short_hash, "010110001101", SHORT_HASH_LENGTH);
 
-	while (ptr != NULL) {
-		time_t diff = cur_time - ptr->ts;
-		if (diff >= threshold) {
-			_dbg("%s%s LEAVE%s\n", YELLOW, ptr->ipaddr, RESET);
-			list_delete_by_ip(ptr->ipaddr);
-		}
-		ptr = ptr->next;
-	}
-	return;
-}
-
-/* int self_test (void)
-{
-	int ret = 0;
-	struct ip_list_struct *ptr = NULL;
-
+	list_add(&new, true);
 	list_display();
 
-	list_add("11:22:33:44:55:66", time(NULL), true);
-	list_display();
-	list_add("33:22:33:44:55:66", time(NULL), true);
-	list_add("22:22:33:44:55:66", time(NULL), true);
-	list_add("44:22:33:44:55:66", time(NULL), true);
-	list_display();
+	memset(&new, 0, sizeof(struct sh_tbl));
+	memcpy(new.uuid, "A7D1CD4BC21AFEF754108FD06A9D8647", SP_PEER_UUID_LENGTH);
+	memcpy(new.short_hash, "000000000000", SHORT_HASH_LENGTH);
+	
+	list_add(&new, true);
 
-	ptr = list_search_by_ip("44:22:33:44:55:66", NULL);
+	memset(&new, 0, sizeof(struct sh_tbl));
+	memcpy(new.uuid, "C7D1CD4BC21AFEF754108FD06A9D8647", SP_PEER_UUID_LENGTH);
+	memcpy(new.short_hash, "111111111111", SHORT_HASH_LENGTH);
+	
+	list_add(&new, true);
+	list_display();
+	
+	ptr = list_search_by_shorthash ("000000000000", NULL);
 	if(NULL == ptr) {
-		_dbg("Search [ip = 11:22:33:44:55:66] failed, no such element found\n");
+		DBG ("%sSearch [sh = 000000000000] failed, no such element found%s\n",LIGHT_GREEN, RESET);
 	} else {
-		_dbg("Search passed [ip = %s]\n", ptr->ipaddr);
+		DBG ("%sSearch passed [sh = 000000000000, uuid = %s]%s\n",LIGHT_GREEN, ptr->uuid, RESET);
 	}
 
-	ret = list_delete_by_ip("44:22:33:44:55:66");
-	if(ret != 0) {
-		_dbg("delete [ip = 44:22:33:44:55:66] failed, no such element found\n");
+	ptr = list_search_by_shorthash ("111111111111", NULL);
+	if(NULL == ptr) {
+		DBG ("%sSearch [sh = 111111111111] failed, no such element found%s\n",LIGHT_GREEN, RESET);
 	} else {
-		_dbg("delete [ip = 44:22:33:44:55:66]  passed \n");
+		DBG ("%sSearch passed [sh = 111111111111, uuid = %s]%s\n",LIGHT_GREEN, ptr->uuid, RESET);
 	}
+
+	ptr = list_search_by_shorthash ("010110001101", NULL);
+	if(NULL == ptr) {
+		DBG ("%sSearch [sh = 010110001101] failed, no such element found%s\n",LIGHT_GREEN, RESET);
+	} else {
+		DBG ("%sSearch passed [sh = 010110001101, uuid = %s]%s\n",LIGHT_GREEN, ptr->uuid, RESET);
+	}
+
+	// ret = list_delete_by_shorthash("010110001101");
+	// if(ret != 0) {
+	//  	DBG ("%sdelete [sh = 010110001101] failed, no such element found%s\n",LIGHT_GREEN, RESET);
+	// } else {
+	//  	DBG ("%sdelete [sh = 010110001101]  passed%s\n",LIGHT_GREEN, RESET);
+	// }
+
+	// list_display();
+
+	// ret = list_delete_by_shorthash("111111111111");
+	// if(ret != 0) {
+	//  	DBG ("%sdelete [sh = 111111111111] failed, no such element found%s\n",LIGHT_GREEN, RESET);
+	// } else {
+	//  	DBG ("%sdelete [sh = 111111111111]  passed%s\n",LIGHT_GREEN, RESET);
+	// }
+
+	// list_display();
+
+	// ret = list_delete_by_shorthash("000000000000");
+	// if(ret != 0) {
+	//  	DBG ("%sdelete [sh = 000000000000] failed, no such element found%s\n",LIGHT_GREEN, RESET);
+	// } else {
+	//  	DBG ("%sdelete [sh = 000000000000]  passed%s\n",LIGHT_GREEN, RESET);
+	// }
 
 	list_display();
 	list_free();
 	return 0;
-} */
+}
+#endif

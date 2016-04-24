@@ -6,6 +6,10 @@
 #include "p2p-common.h"
 #include "p2p-encrypt.h"
 
+#ifdef __DEBUG__
+// #include "p2p-list.h"
+#endif
+
 #define NODE_NAME_PREFIX	"cli-"
 #define LAN_IFACE			"eth1"
 #define LAN_IFACE_PORT		5670
@@ -134,6 +138,7 @@ int main (int argc, char *argv [])
 
 #ifdef __DEBUG__
 	// hash_test();
+	// list_self_test  ();
 #endif
 
 	while (!zsys_interrupted) {

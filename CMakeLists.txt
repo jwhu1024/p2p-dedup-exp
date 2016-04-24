@@ -35,6 +35,7 @@ add_executable(p2p-dedup
 	./src/p2p-cmd-handler.c
 	./src/p2p-event-handler.c
 	./src/p2p-encrypt.c
+	./src/p2p-list.c
 	./src/p2p-common.c
 )
 
