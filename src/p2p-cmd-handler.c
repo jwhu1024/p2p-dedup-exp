@@ -97,19 +97,10 @@ static int process_set_sp (zyre_t *node, zmsg_t *msg)
 		snprintf (sp_p->sp_peer, SP_PEER_UUID_LENGTH + 1, "%s", zyre_uuid (node));
 		sp_p->own = 1;
 
-		/* notify other peers I'm superpeer */
-		zlist_t *list = zyre_peers (node);
-		while  (zlist_next(list) != NULL) {
-			char *online_peer = (char *) zlist_pop (list);
-			DBG ("online_peer %s\n", online_peer);
-
-			char msg_to_send[MSG_TRANS_LENGTH] = {0};
-			sprintf (msg_to_send, "%s-%s", CMD_SP, zyre_uuid (node));
-			send_whisper_msg (node, msg_to_send, online_peer);
-
-			if (online_peer)	free (online_peer);
-		}
-		zlist_destroy (&list);
+		/* notify other peers I'm superpeer by using broadcast*/
+		char msg_to_send[MSG_TRANS_LENGTH] = {0};
+		sprintf (msg_to_send, "%s-%s", CMD_SP, zyre_uuid (node));
+		send_shout_msg (node, msg_to_send);
 	} else {
 		DBG ("Do nothing...superpeer exists\n");
 	}
@@ -138,10 +129,10 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
 
 	/*
-		1. sends s(h) and our uuid to sp 
+		1. sends s(h) and our uuid to sp
 		FORMAT: HEADER-SHORTHASH-SELFUUID
 	*/
-	sprintf (msg_to_send, "%s %s %s", CMD_SSU, short_hash, zyre_uuid (node));	
+	sprintf (msg_to_send, "%s %s %s", CMD_SSU, short_hash, zyre_uuid (node));
 	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
 	return 1;
 }
@@ -159,3 +150,30 @@ void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)
 
 	return;
 }
+
+void send_shout_msg (zyre_t *node, char *msg)
+{
+	zmsg_t *lmsg = zmsg_new ();
+	zmsg_pushstrf  	(lmsg, "%s", msg);
+	process_shout (node, lmsg);
+	zmsg_destroy 	(&lmsg);
+
+	DBG ("%s===== Send \"%s\" to all peers =====%s\n", LIGHT_CYAN, msg, RESET);
+
+	return;
+}
+
+/* notify other peers I'm superpeer
+zlist_t *list = zyre_peers (node);
+while  (zlist_next(list) != NULL) {
+	char *online_peer = (char *) zlist_pop (list);
+	DBG ("online_peer %s\n", online_peer);
+
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+	sprintf (msg_to_send, "%s-%s", CMD_SP, zyre_uuid (node));
+	send_whisper_msg (node, msg_to_send, online_peer);
+
+	if (online_peer)	free (online_peer);
+}
+zlist_destroy (&list);
+*/

@@ -40,6 +40,7 @@ void free_mem (req_info_t *info)
 	if (info->message)	free(info->message);
 }
 
+static void parse_shout_message (zyre_t *node, char *message);
 static void parse_whisper_message (zyre_t *node, char *message);
 
 int event_enter_handler (req_info_t *info)
@@ -112,6 +113,7 @@ int event_whisper_handler (req_info_t *info)
 int event_shout_handler (req_info_t *info)
 {
 	DBG ("%s%s: %s%s\n", LIGHT_GREEN, info->name, info->message, RESET);
+	parse_shout_message (info->node, info->message);
 	free_mem(info);
 	return 1;
 }
@@ -178,14 +180,20 @@ static int is_peer_online (zyre_t *node, char *uuid)
 	return 0;
 }
 
+static void parse_shout_message (zyre_t *node, char *message)
+{
+	if (strncmp (CMD_SP, message, strlen (CMD_SP)) == 0) {
+		sprintf (sp_info.sp_peer, "%s", message + strlen(CMD_SP) + 1);
+		DBG ("sp_peer: %s\n", sp_info.sp_peer);
+	}
+	return;
+}
+
 static void parse_whisper_message (zyre_t *node, char *message)
 {
 	bool in_list = false;
 
-	if (strncmp (CMD_SP, message, strlen (CMD_SP)) == 0) {
-		sprintf (sp_info.sp_peer, "%s", message + strlen(CMD_SP) + 1);
-		DBG ("sp_peer: %s\n", sp_info.sp_peer);
-	} else if (strncmp (CMD_SSU, message, strlen (CMD_SSU)) == 0) {
+	if (strncmp (CMD_SSU, message, strlen (CMD_SSU)) == 0) {
 		/*
 			2. check sh(f) whether is in our table
 			FORMAT: HEADER SHORTHASH SELFUUID
@@ -215,9 +223,9 @@ static void parse_whisper_message (zyre_t *node, char *message)
 			}
 
 			DBG ("%sin_list: %s, peer_is_online: %d%s\n", LIGHT_BLUE
-														, (in_list == true) ? "true" : "false"
-														, peer_is_online
-														, RESET);
+			     , (in_list == true) ? "true" : "false"
+			     , peer_is_online
+			     , RESET);
 
 			/*
 				2-1. send back the uuid which have this shorthash if online
@@ -235,8 +243,8 @@ static void parse_whisper_message (zyre_t *node, char *message)
 				sprintf (msg_to_send, "%s %d", CMD_SSU_RSP, SH_NOT_FOUND);
 			}
 
-			DBG ("%s[msg_to_send = %s] %s\n", LIGHT_GREEN, msg_to_send, RESET);
-			DBG ("%s[sz_uuid = %s] %s\n", LIGHT_GREEN, sz_uuid, RESET);
+			// DBG ("%s[msg_to_send = %s] %s\n", LIGHT_GREEN, msg_to_send, RESET);
+			// DBG ("%s[sz_uuid = %s] %s\n", LIGHT_GREEN, sz_uuid, RESET);
 
 			sz_uuid[SP_PEER_UUID_LENGTH] = '\0';
 			msg_to_send[strlen(msg_to_send)] = '\0';
@@ -247,4 +255,5 @@ static void parse_whisper_message (zyre_t *node, char *message)
 	} else if (strncmp (CMD_SSU_RSP, message, strlen (CMD_SSU_RSP)) == 0) {
 		DBG ("###############%s: %s\n", CMD_SSU_RSP, message);
 	}
+	return;
 }

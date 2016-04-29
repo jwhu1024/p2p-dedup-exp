@@ -78,6 +78,7 @@ static void dedup_actor (zsock_t *pipe, void *args)
 			zmsg_t *msg = zmsg_recv (which);
 			if (!msg)
 				break;
+			zmsg_dump (msg);
 
 			char *command = zmsg_popstr(msg);
 
