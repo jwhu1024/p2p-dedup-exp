@@ -15,4 +15,6 @@ typedef struct user_cmd_table {
 	int (*CMD_HANDLER) (zyre_t *node, zmsg_t *msg);
 } user_cmd_table_t;
 
+void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer);
+
 #endif /* _P2P_CMD_HANDLER_H_ */

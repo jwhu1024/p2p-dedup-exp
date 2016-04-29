@@ -6,19 +6,17 @@
 extern const char *HEADER_VALUE;
 extern const char *P2P_GROUP_NAME;
 extern sp_info_t sp_info;
+extern struct sh_tbl *sh_table;
 
 bool terminated = false;
 
-/* local helper functions */
-static void send_whisper_msg (zyre_t *node,char *msg, char *dest_peer);
-
-int process_terminate 	(zyre_t *node, zmsg_t *msg);
-int process_shout 		(zyre_t *node, zmsg_t *msg);
-int process_whisper 	(zyre_t *node, zmsg_t *msg);
-int query_online_peers 	(zyre_t *node, zmsg_t *msg);
-int sp_notify_peers		(zyre_t *node, zmsg_t *msg);
-int process_set_sp 		(zyre_t *node, zmsg_t *msg);
-int process_start 		(zyre_t *node, zmsg_t *msg);
+static int process_terminate 	(zyre_t *node, zmsg_t *msg);
+static int process_shout 		(zyre_t *node, zmsg_t *msg);
+static int process_whisper 		(zyre_t *node, zmsg_t *msg);
+static int query_online_peers 	(zyre_t *node, zmsg_t *msg);
+// static int sp_notify_peers		(zyre_t *node, zmsg_t *msg);
+static int process_set_sp 		(zyre_t *node, zmsg_t *msg);
+static int process_start 		(zyre_t *node, zmsg_t *msg);
 
 user_cmd_table_t user_op_func_tbl[] = {
 	{	"$TERM",		process_terminate 	},
@@ -30,13 +28,13 @@ user_cmd_table_t user_op_func_tbl[] = {
 	{	"",				NULL	 			}
 };
 
-int process_terminate (zyre_t *node, zmsg_t *msg)
+static int process_terminate (zyre_t *node, zmsg_t *msg)
 {
 	terminated = true;
 	return 1;
 }
 
-int process_shout (zyre_t *node, zmsg_t *msg)
+static int process_shout (zyre_t *node, zmsg_t *msg)
 {
 	char *string = zmsg_popstr (msg);
 	zyre_shouts (node, P2P_GROUP_NAME, "%s", string);
@@ -46,7 +44,7 @@ int process_shout (zyre_t *node, zmsg_t *msg)
 	return 1;
 }
 
-int process_whisper (zyre_t *node, zmsg_t *msg)
+static int process_whisper (zyre_t *node, zmsg_t *msg)
 {
 	char *peer 		= zmsg_popstr (msg);
 	char *message 	= zmsg_popstr (msg);
@@ -61,7 +59,7 @@ int process_whisper (zyre_t *node, zmsg_t *msg)
 	return 1;
 }
 
-int query_online_peers (zyre_t *node, zmsg_t *msg)
+static int query_online_peers (zyre_t *node, zmsg_t *msg)
 {
 	int peers = 0;
 	zlist_t *plist = zyre_peers (node);
@@ -84,7 +82,7 @@ int query_online_peers (zyre_t *node, zmsg_t *msg)
 	return peers;
 }
 
-int process_set_sp (zyre_t *node, zmsg_t *msg)
+static int process_set_sp (zyre_t *node, zmsg_t *msg)
 {
 	sp_info_t *sp_p = &sp_info;
 
@@ -118,9 +116,11 @@ int process_set_sp (zyre_t *node, zmsg_t *msg)
 	return 1;
 }
 
-int process_start (zyre_t *node, zmsg_t *msg)
+static int process_start (zyre_t *node, zmsg_t *msg)
 {
 	sp_info_t *sp_p = &sp_info;
+
+	DBG ("%s===== Start our dedup process =====%s\n", LIGHT_CYAN, RESET);
 
 	if (sp_p->sp_peer[0] == '\0') {
 		DBG ("%sCan't do OPRF before we known who is the sp, discard it! %s\n", LIGHT_RED, RESET);
@@ -136,19 +136,26 @@ int process_start (zyre_t *node, zmsg_t *msg)
 	short_hash_calc ("/vagrant/a", short_hash);
 
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
-	sprintf (msg_to_send, "%s-%s-%s", CMD_SSU, short_hash, zyre_uuid (node));	
-	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
 
-	DBG ("\n");
+	/*
+		1. sends s(h) and our uuid to sp 
+		FORMAT: HEADER-SHORTHASH-SELFUUID
+	*/
+	sprintf (msg_to_send, "%s %s %s", CMD_SSU, short_hash, zyre_uuid (node));	
+	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
 	return 1;
 }
 
-static void send_whisper_msg (zyre_t *node,char *msg, char *dest_peer)
+/* helper functions */
+void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)
 {
 	zmsg_t *lmsg = zmsg_new ();
 	zmsg_pushstrf  	(lmsg, "%s", msg);
 	zmsg_pushstr 	(lmsg, dest_peer);
 	process_whisper (node, lmsg);
 	zmsg_destroy 	(&lmsg);
+
+	DBG ("%s===== Send \"%s\" to %s =====%s\n", LIGHT_CYAN, msg, dest_peer, RESET);
+
 	return;
 }

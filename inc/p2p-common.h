@@ -38,8 +38,12 @@
 #define WHITE 				"\033[1;37m"
 #define RESET 				"\033[0m"
 
-#define CMD_SP				"SP"	/* SetSP Header */
-#define CMD_SSU				"SSU"	/* Send ShortHash UUID */
+#define CMD_SP				"SP"		/* SetSP Header */
+#define CMD_SSU				"SSU"		/* Send ShortHash UUID */
+#define CMD_SSU_RSP			"RSPSSU"	/* Response */
+
+#define SH_FOUND			1
+#define SH_NOT_FOUND		0
 
 #define SHA1_HASH_LENGTH	40
 #define SHA256_HASH_LENGTH	64

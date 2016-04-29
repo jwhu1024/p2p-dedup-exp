@@ -5,6 +5,7 @@
 #include "p2p-event-handler.h"
 #include "p2p-common.h"
 #include "p2p-encrypt.h"
+#include "p2p-list.h"
 
 #ifdef __DEBUG__
 // #include "p2p-list.h"
@@ -181,6 +182,7 @@ int main (int argc, char *argv [])
 		memset(command, '\0', sizeof(command));
 		memset(message, '\0', sizeof(message));
 	}
+	list_free ();
 	zactor_destroy (&d_actor);
 	return 0;
 }
