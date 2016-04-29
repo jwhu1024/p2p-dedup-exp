@@ -104,7 +104,7 @@ int event_leave_handler (req_info_t *info)
 
 int event_whisper_handler (req_info_t *info)
 {
-	// DBG ("%s%s: %s%s\n", RED, info->name, info->message, RESET);
+	DBG ("%s%s: %s%s\n", RED, info->name, info->message, RESET);
 	parse_whisper_message (info->node, info->message);
 	free_mem(info);
 	return 1;
@@ -191,24 +191,23 @@ static void parse_shout_message (zyre_t *node, char *message)
 
 static void parse_whisper_message (zyre_t *node, char *message)
 {
-	bool in_list = false;
-
 	if (strncmp (CMD_SSU, message, strlen (CMD_SSU)) == 0) {
 		/*
 			2. check sh(f) whether is in our table
 			FORMAT: HEADER SHORTHASH SELFUUID
 		*/
+		bool in_list = false;
 		char sz_header[strlen (CMD_SSU)];
 		char sh[SHORT_HASH_LENGTH] = {0};
-		char sz_uuid[SP_PEER_UUID_LENGTH + 1] = {0};
+		char src_uuid[SP_PEER_UUID_LENGTH + 1] = {0};
 
-		sscanf(message, "%s %s %s", sz_header, sh, sz_uuid);
-		// DBG ("header: %s, shorthash: %s, uuid: %s\n", sz_header, sh, sz_uuid);
+		sscanf(message, "%s %s %s", sz_header, sh, src_uuid);
+		// DBG ("header: %s, shorthash: %s, uuid: %s\n", sz_header, sh, src_uuid);
 
 		struct sh_tbl *ptr = list_search_by_shorthash (sh, NULL);
 		if (NULL == ptr) {
 			DBG ("%sSearch [sh = %s] failed, no such element found%s\n", YELLOW, sh, RESET);
-			store_conn_history (sh, sz_uuid);
+			store_conn_history (sh, src_uuid);
 		} else {
 			in_list = true;
 			DBG ("%sSearch passed [sh = %s, uuid = %s]%s\n", YELLOW, sh, ptr->uuid, RESET);
@@ -234,26 +233,40 @@ static void parse_whisper_message (zyre_t *node, char *message)
 			if (in_list == true && peer_is_online == 1) {
 				DBG ("%speer online: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
 				sprintf (msg_to_send, "%s %d %s", CMD_SSU_RSP, SH_FOUND, ptr->uuid);
-			} else {
-				/*
-					2-2. tell the p1 which sh not found or not in list
-					FORMAT: HEADER-NOTFOUND
-				*/
+			}
+			/*
+				2-2. tell the p1 which sh not found or not in list
+				FORMAT: HEADER-NOTFOUND
+			*/
+			else {
+
 				DBG ("%speer offline: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
 				sprintf (msg_to_send, "%s %d", CMD_SSU_RSP, SH_NOT_FOUND);
 			}
 
 			// DBG ("%s[msg_to_send = %s] %s\n", LIGHT_GREEN, msg_to_send, RESET);
-			// DBG ("%s[sz_uuid = %s] %s\n", LIGHT_GREEN, sz_uuid, RESET);
+			// DBG ("%s[src_uuid = %s] %s\n", LIGHT_GREEN, src_uuid, RESET);
 
-			sz_uuid[SP_PEER_UUID_LENGTH] = '\0';
+			src_uuid[SP_PEER_UUID_LENGTH] = '\0';
 			msg_to_send[strlen(msg_to_send)] = '\0';
-			send_whisper_msg (node, msg_to_send, sz_uuid);
+			send_whisper_msg (node, msg_to_send, src_uuid);
 		} else {
 			DBG ("node is not available\n");
 		}
 	} else if (strncmp (CMD_SSU_RSP, message, strlen (CMD_SSU_RSP)) == 0) {
-		DBG ("###############%s: %s\n", CMD_SSU_RSP, message);
+		// RSPSSU 0
+		// RSPSSU 1 78DB70F02D3D49412FE0031F3654BF05
+		int sh_is_found;
+		char sz_header[strlen (CMD_SSU_RSP)];
+		char dest_uuid[SP_PEER_UUID_LENGTH + 1] = {0};
+
+		sscanf(message, "%s %d", sz_header, &sh_is_found);
+
+		if (sh_is_found == 1) {
+			sscanf(message, "%*s %*d %s", dest_uuid);
+		}
+
+		DBG ("header: %s, sh_is_found: %d, dest_uuid: %s\n", sz_header, sh_is_found, dest_uuid);
 	}
 	return;
 }
