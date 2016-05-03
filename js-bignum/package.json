@@ -1,0 +1,14 @@
+{
+  "name": "cmd-line-skeleton",
+  "version": "0.0.0",
+  "description": "Command line interface with nodejs",
+  "main": "",
+  "scripts": {
+    "test": ""
+  },
+  "author": "jwhu1024@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "prompt": "~0.2.11"
+  }
+}

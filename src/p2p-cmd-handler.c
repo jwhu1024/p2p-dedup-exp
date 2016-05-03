@@ -124,15 +124,16 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 	}
 
 	unsigned char short_hash[13];
-	short_hash_calc ("/vagrant/a", short_hash);
+	unsigned char filehash[SHA256_HASH_LENGTH+1];
+	short_hash_calc ("/vagrant/a", short_hash, filehash);
 
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
 
 	/*
-		1. sends s(h) and our uuid to sp
+		1. sends s(h), filehash and our uuid to sp
 		FORMAT: HEADER-SHORTHASH-SELFUUID
 	*/
-	sprintf (msg_to_send, "%s %s %s", CMD_SSU, short_hash, zyre_uuid (node));
+	sprintf (msg_to_send, "%s %s %s %s", CMD_SSU, short_hash, filehash, zyre_uuid (node));
 	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
 	return 1;
 }
@@ -146,7 +147,7 @@ void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)
 	process_whisper (node, lmsg);
 	zmsg_destroy 	(&lmsg);
 
-	DBG ("%s===== Send \"%s\" to %s =====%s\n", LIGHT_CYAN, msg, dest_peer, RESET);
+	DBG ("\n%s=== Send \"%s\" to %s ===%s\n", LIGHT_CYAN, msg, dest_peer, RESET);
 
 	return;
 }
@@ -158,7 +159,7 @@ void send_shout_msg (zyre_t *node, char *msg)
 	process_shout (node, lmsg);
 	zmsg_destroy 	(&lmsg);
 
-	DBG ("%s===== Send \"%s\" to all peers =====%s\n", LIGHT_CYAN, msg, RESET);
+	DBG ("%s=== Send \"%s\" to all peers ===%s\n", LIGHT_CYAN, msg, RESET);
 
 	return;
 }

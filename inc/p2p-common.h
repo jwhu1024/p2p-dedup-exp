@@ -39,8 +39,18 @@
 #define RESET 				"\033[0m"
 
 #define CMD_SP				"SP"		/* SetSP Header */
+
+/*
+RSPSSU 0
+RSPSSU 1 78DB70F02D3D49412FE0031F3654BF05
+*/
 #define CMD_SSU				"SSU"		/* Send ShortHash UUID */
 #define CMD_SSU_RSP			"RSPSSU"	/* Response */
+
+/*
+SPREC 010110001101 78DB70F02D3D49412FE0031F3654BF05
+*/
+#define CMD_SP_REC			"SPREC"		/* Send UUID to SP for record */
 
 #define SH_FOUND			1
 #define SH_NOT_FOUND		0
@@ -49,7 +59,7 @@
 #define SHA256_HASH_LENGTH	64
 #define SHORT_HASH_LENGTH	12
 #define SP_PEER_UUID_LENGTH	32
-#define MSG_TRANS_LENGTH	128
+#define MSG_TRANS_LENGTH	1024
 
 typedef struct {
 	char sp_peer[SP_PEER_UUID_LENGTH];

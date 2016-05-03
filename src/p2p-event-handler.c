@@ -104,7 +104,7 @@ int event_leave_handler (req_info_t *info)
 
 int event_whisper_handler (req_info_t *info)
 {
-	DBG ("%s%s: %s%s\n", RED, info->name, info->message, RESET);
+	// DBG ("%s%s: %s%s\n", RED, info->name, info->message, RESET);
 	parse_whisper_message (info->node, info->message);
 	free_mem(info);
 	return 1;
@@ -151,10 +151,7 @@ static void store_conn_history (char *sh, char *uuid)
 
 static int is_peer_equal (char *u1, char *u2)
 {
-	if (strncmp (u1, u2, SP_PEER_UUID_LENGTH) == 0) {
-		return 1;
-	}
-	return 0;
+	return (strncmp (u1, u2, SP_PEER_UUID_LENGTH) == 0) ? 1 : 0;
 }
 
 static int is_peer_online (zyre_t *node, char *uuid)
@@ -168,11 +165,7 @@ static int is_peer_online (zyre_t *node, char *uuid)
 	/* check if current online peers is match in list */
 	while (zlist_next(plist) != NULL) {
 		char *temp_peer = (char *) zlist_pop (plist);
-		// DBG ("%s temp_peer\n", temp_peer);
-		// DBG ("%s uuid\n", uuid);
-
 		if (is_peer_equal (temp_peer, uuid) == 1) {
-			// DBG ("%speer online: %s%s\n", LIGHT_BLUE, uuid, RESET);
 			return 1;
 		}
 	}
@@ -189,6 +182,34 @@ static void parse_shout_message (zyre_t *node, char *message)
 	return;
 }
 
+static int random_select_peer (zyre_t *node, char *p)
+{
+	time_t t;
+	srand((unsigned) time(&t));
+
+	// random select a peer to do dedup
+	int peers = 0;
+	zlist_t *plist = zyre_peers (node);
+	int sz = (int) zlist_size (plist);
+
+	int rand_num = rand() % sz;
+	// DBG ("rand_num: %d\n", rand_num);
+
+	if (sz > 0) {
+		while (zlist_next(plist) != NULL) {
+			if (peers == rand_num) {
+				memcpy(p, (char *) zlist_pop (plist), SP_PEER_UUID_LENGTH);
+				// DBG ("random select peer: %s\n", p);
+				return 1;
+			}
+			peers++;
+		}
+	} else {
+		// DBG ("No peers online, can't do dedup\n");
+	}
+	return 0;
+}
+
 static void parse_whisper_message (zyre_t *node, char *message)
 {
 	if (strncmp (CMD_SSU, message, strlen (CMD_SSU)) == 0) {
@@ -199,15 +220,16 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		bool in_list = false;
 		char sz_header[strlen (CMD_SSU)];
 		char sh[SHORT_HASH_LENGTH] = {0};
+		char filehash[SHA256_HASH_LENGTH + 1] = {0};
 		char src_uuid[SP_PEER_UUID_LENGTH + 1] = {0};
 
-		sscanf(message, "%s %s %s", sz_header, sh, src_uuid);
-		// DBG ("header: %s, shorthash: %s, uuid: %s\n", sz_header, sh, src_uuid);
+		sscanf(message, "%s %s %s %s", sz_header, sh, filehash, src_uuid);
+		DBG ("\n%s=== Received - \"%s\" from %s ===%s\n", LIGHT_CYAN, message, src_uuid, RESET);
 
 		struct sh_tbl *ptr = list_search_by_shorthash (sh, NULL);
 		if (NULL == ptr) {
 			DBG ("%sSearch [sh = %s] failed, no such element found%s\n", YELLOW, sh, RESET);
-			store_conn_history (sh, src_uuid);
+			// store_conn_history (sh, src_uuid);
 		} else {
 			in_list = true;
 			DBG ("%sSearch passed [sh = %s, uuid = %s]%s\n", YELLOW, sh, ptr->uuid, RESET);
@@ -228,24 +250,21 @@ static void parse_whisper_message (zyre_t *node, char *message)
 
 			/*
 				2-1. send back the uuid which have this shorthash if online
-				FORMAT: HEADER-FOUND-UUID
+				FORMAT: HEADER-FOUND-UUID-SH-FILEHASH
 			*/
 			if (in_list == true && peer_is_online == 1) {
 				DBG ("%speer online: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
-				sprintf (msg_to_send, "%s %d %s", CMD_SSU_RSP, SH_FOUND, ptr->uuid);
+				sprintf (msg_to_send, "%s %d %s %s %s", CMD_SSU_RSP, SH_FOUND, ptr->uuid, sh, filehash);
 			}
 			/*
 				2-2. tell the p1 which sh not found or not in list
-				FORMAT: HEADER-NOTFOUND
+				FORMAT: HEADER-NOTFOUND-FILEHASH
 			*/
 			else {
 
 				DBG ("%speer offline: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
-				sprintf (msg_to_send, "%s %d", CMD_SSU_RSP, SH_NOT_FOUND);
+				sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP, SH_NOT_FOUND, sh, filehash);
 			}
-
-			// DBG ("%s[msg_to_send = %s] %s\n", LIGHT_GREEN, msg_to_send, RESET);
-			// DBG ("%s[src_uuid = %s] %s\n", LIGHT_GREEN, src_uuid, RESET);
 
 			src_uuid[SP_PEER_UUID_LENGTH] = '\0';
 			msg_to_send[strlen(msg_to_send)] = '\0';
@@ -254,19 +273,57 @@ static void parse_whisper_message (zyre_t *node, char *message)
 			DBG ("node is not available\n");
 		}
 	} else if (strncmp (CMD_SSU_RSP, message, strlen (CMD_SSU_RSP)) == 0) {
-		// RSPSSU 0
-		// RSPSSU 1 78DB70F02D3D49412FE0031F3654BF05
+		// RSPSSU 0 010110001101 58dd5518cc2c29da0a650ffdb18605f5d7ae404b8d8304e4c6992e4df3addf24
+		// RSPSSU SHISFOUND SHORTHASH FILEHASH
+		// RSPSSU 1 78DB70F02D3D49412FE0031F3654BF05 010110001101 58dd5518cc2c29da0a650ffdb18605f5d7ae404b8d8304e4c6992e4df3addf24
+		// RSPSSU SHISFOUND DEST-UUID SHORTHASH FILEHASH
 		int sh_is_found;
 		char sz_header[strlen (CMD_SSU_RSP)];
 		char dest_uuid[SP_PEER_UUID_LENGTH + 1] = {0};
+		char sh[SHORT_HASH_LENGTH] = {0};
+		char filehash[SHA256_HASH_LENGTH + 1] = {0};
+		char msg_to_send[MSG_TRANS_LENGTH] = {0};
 
 		sscanf(message, "%s %d", sz_header, &sh_is_found);
 
 		if (sh_is_found == 1) {
-			sscanf(message, "%*s %*d %s", dest_uuid);
+			sscanf(message, "%*s %*d %s %s %s", dest_uuid, sh, filehash);
+
+		} else {
+			sscanf(message, "%*s %*d %s %s", sh, filehash);
+			int r = random_select_peer (node , dest_uuid);
+
+			// OPRF begin...
+
 		}
 
-		DBG ("header: %s, sh_is_found: %d, dest_uuid: %s\n", sz_header, sh_is_found, dest_uuid);
+		DBG ("\n%s=== Received - %s %d %s %s ===%s\n", LIGHT_CYAN, sz_header, sh_is_found, dest_uuid, sh, filehash, RESET);
+
+		/*
+			Send the selected peer uuid to SP
+			SPREC SHORTHASH SELF-UUID
+			SPREC 010110001101 78DB70F02D3D49412FE0031F3654BF05
+		*/
+		sprintf (msg_to_send, "%s %s %s", CMD_SP_REC, sh, zyre_uuid (node));
+		msg_to_send[strlen(msg_to_send)] = '\0';
+		send_whisper_msg (node, msg_to_send, sp_info.sp_peer);
+
+		return;
+	} else if (strncmp (CMD_SP_REC, message, strlen (CMD_SP_REC)) == 0) {
+		/*
+			Received the selected peer uuid by client peer
+			SPREC SHORTHASH SELF-UUID
+			SPREC 010110001101 78DB70F02D3D49412FE0031F3654BF05
+		*/
+		char uuid[SP_PEER_UUID_LENGTH + 1] = {0};
+		char sh[SHORT_HASH_LENGTH] = {0};
+
+		sscanf(message, "%*s %s %s", sh, uuid);
+
+		store_conn_history (sh, uuid);
+
+
+		DBG ("\n%s=== Received - %s %s %s ===%s\n", LIGHT_CYAN, CMD_SP_REC, sh, uuid, RESET);
+		return;
 	}
-	return;
 }
