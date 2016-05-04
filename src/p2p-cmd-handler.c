@@ -49,7 +49,7 @@ static int process_whisper (zyre_t *node, zmsg_t *msg)
 	char *peer 		= zmsg_popstr (msg);
 	char *message 	= zmsg_popstr (msg);
 
-	DBG("peer: %s, message: %s\n", peer, message);
+	// DBG("peer: %s, message: %s\n", peer, message);
 
 	zyre_whispers  (node, peer, "%s", message);
 
@@ -77,6 +77,7 @@ static int query_online_peers (zyre_t *node, zmsg_t *msg)
 	}
 
 	DBG ("SuperPeer : %s\n", sp_info.sp_peer);
+	DBG ("Self : %s\n", zyre_uuid (node));
 	DBG ("Own : %d\n", sp_info.own);
 
 	return peers;
@@ -111,7 +112,7 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 {
 	sp_info_t *sp_p = &sp_info;
 
-	DBG ("%s===== Start our dedup process =====%s\n", LIGHT_CYAN, RESET);
+	DBG ("%s===== Start our dedup process =====%s\n", LIGHT_PURPLE, RESET);
 
 	if (sp_p->sp_peer[0] == '\0') {
 		DBG ("%sCan't do OPRF before we known who is the sp, discard it! %s\n", LIGHT_RED, RESET);
@@ -124,7 +125,7 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 	}
 
 	unsigned char short_hash[13];
-	unsigned char filehash[SHA256_HASH_LENGTH+1];
+	unsigned char filehash[SHA256_HASH_LENGTH];
 	short_hash_calc ("/vagrant/a", short_hash, filehash);
 
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
@@ -147,8 +148,7 @@ void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)
 	process_whisper (node, lmsg);
 	zmsg_destroy 	(&lmsg);
 
-	DBG ("\n%s=== Send \"%s\" to %s ===%s\n", LIGHT_CYAN, msg, dest_peer, RESET);
-
+	DBG ("\n%s=== Send \"%s\" to %s ===%s\n", LIGHT_PURPLE, msg, dest_peer, RESET);
 	return;
 }
 
@@ -159,22 +159,6 @@ void send_shout_msg (zyre_t *node, char *msg)
 	process_shout (node, lmsg);
 	zmsg_destroy 	(&lmsg);
 
-	DBG ("%s=== Send \"%s\" to all peers ===%s\n", LIGHT_CYAN, msg, RESET);
-
+	DBG ("%s=== Send \"%s\" to all peers ===%s\n", LIGHT_PURPLE, msg, RESET);
 	return;
 }
-
-/* notify other peers I'm superpeer
-zlist_t *list = zyre_peers (node);
-while  (zlist_next(list) != NULL) {
-	char *online_peer = (char *) zlist_pop (list);
-	DBG ("online_peer %s\n", online_peer);
-
-	char msg_to_send[MSG_TRANS_LENGTH] = {0};
-	sprintf (msg_to_send, "%s-%s", CMD_SP, zyre_uuid (node));
-	send_whisper_msg (node, msg_to_send, online_peer);
-
-	if (online_peer)	free (online_peer);
-}
-zlist_destroy (&list);
-*/

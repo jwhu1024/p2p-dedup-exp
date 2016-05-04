@@ -16,8 +16,6 @@ struct sh_tbl *curr = NULL;
 */
 struct sh_tbl* create_list (char *uuid, unsigned char *sh)
 {
-	// 	DBG ("new.uuid: %s\n", uuid);
-	// DBG ("new.short_hash: %s\n", sh);
 	if (L_DEBUG)
 		DBG ("Creating list with headnode as [%s] - uuid [%s]\n", uuid, sh);
 
@@ -30,15 +28,22 @@ struct sh_tbl* create_list (char *uuid, unsigned char *sh)
 	memcpy(ptr->uuid, uuid, SP_PEER_UUID_LENGTH);
 	memcpy(ptr->short_hash, sh, SHORT_HASH_LENGTH);
 	ptr->next = NULL;
-	
+
 	head = curr = ptr;
 	return ptr;
 }
 
 struct sh_tbl* list_add (struct sh_tbl* sh_tbl, bool add_to_end)
 {
-	// DBG ("new.uuid: %s\n", sh_tbl->uuid);
-	// DBG ("new.short_hash: %s\n", sh_tbl->short_hash);
+	struct sh_tbl *prev = NULL;
+	struct sh_tbl *target = NULL;
+
+	target = list_search_by_shorthash ((char *) sh_tbl->short_hash, &prev);
+	if (target != NULL) {
+		target = NULL;
+		return NULL;
+	}
+
 	if (NULL == head) {
 		return (create_list(sh_tbl->uuid, sh_tbl->short_hash));
 	}
@@ -230,35 +235,35 @@ int list_self_test (void)
 	memset(&new, 0, sizeof(struct sh_tbl));
 	memcpy(new.uuid, "A7D1CD4BC21AFEF754108FD06A9D8647", SP_PEER_UUID_LENGTH);
 	memcpy(new.short_hash, "000000000000", SHORT_HASH_LENGTH);
-	
+
 	list_add(&new, true);
 
 	memset(&new, 0, sizeof(struct sh_tbl));
 	memcpy(new.uuid, "C7D1CD4BC21AFEF754108FD06A9D8647", SP_PEER_UUID_LENGTH);
 	memcpy(new.short_hash, "111111111111", SHORT_HASH_LENGTH);
-	
+
 	list_add(&new, true);
 	list_display();
-	
+
 	ptr = list_search_by_shorthash ("000000000000", NULL);
-	if(NULL == ptr) {
-		DBG ("%sSearch [sh = 000000000000] failed, no such element found%s\n",LIGHT_GREEN, RESET);
+	if (NULL == ptr) {
+		DBG ("%sSearch [sh = 000000000000] failed, no such element found%s\n", LIGHT_GREEN, RESET);
 	} else {
-		DBG ("%sSearch passed [sh = 000000000000, uuid = %s]%s\n",LIGHT_GREEN, ptr->uuid, RESET);
+		DBG ("%sSearch passed [sh = 000000000000, uuid = %s]%s\n", LIGHT_GREEN, ptr->uuid, RESET);
 	}
 
 	ptr = list_search_by_shorthash ("111111111111", NULL);
-	if(NULL == ptr) {
-		DBG ("%sSearch [sh = 111111111111] failed, no such element found%s\n",LIGHT_GREEN, RESET);
+	if (NULL == ptr) {
+		DBG ("%sSearch [sh = 111111111111] failed, no such element found%s\n", LIGHT_GREEN, RESET);
 	} else {
-		DBG ("%sSearch passed [sh = 111111111111, uuid = %s]%s\n",LIGHT_GREEN, ptr->uuid, RESET);
+		DBG ("%sSearch passed [sh = 111111111111, uuid = %s]%s\n", LIGHT_GREEN, ptr->uuid, RESET);
 	}
 
 	ptr = list_search_by_shorthash ("010110001101", NULL);
-	if(NULL == ptr) {
-		DBG ("%sSearch [sh = 010110001101] failed, no such element found%s\n",LIGHT_GREEN, RESET);
+	if (NULL == ptr) {
+		DBG ("%sSearch [sh = 010110001101] failed, no such element found%s\n", LIGHT_GREEN, RESET);
 	} else {
-		DBG ("%sSearch passed [sh = 010110001101, uuid = %s]%s\n",LIGHT_GREEN, ptr->uuid, RESET);
+		DBG ("%sSearch passed [sh = 010110001101, uuid = %s]%s\n", LIGHT_GREEN, ptr->uuid, RESET);
 	}
 
 	// ret = list_delete_by_shorthash("010110001101");

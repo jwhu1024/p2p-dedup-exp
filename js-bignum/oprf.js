@@ -1,7 +1,6 @@
 var bignum = require("bignum");
 
 function do_oprf_h1 (_fileHash) {
-	var koprf;
 	var fileHash = _fileHash;
 	var h1 = bignum(fileHash, 16);
 	var n = bignum('145859173040309229955833252345654325463844070602921285056139874043635346668941428484651128442619349098391282012811366461830349732301204981399638512025284782925269077642090448376311362217230794213004405021482693447818117628194854565751827513600850925224038365314953038266614774662696559105571178095070057414419');
@@ -41,13 +40,13 @@ var cmd = args[0];
 
 switch (args[0]) {
 	case "1": // cmd - filehash
-		do_oprf_h1(args[1]);
+		do_oprf_h1 (args[1]);
 		break;
 	case "2":
-		do_oprf_k1(args[1]);
+		do_oprf_k1 (args[1]);
 		break;
 	case "3":
-		do_oprf(args[1]);
+		do_oprf (args[1]);
 		break;
 	default:
 		console.log('default');

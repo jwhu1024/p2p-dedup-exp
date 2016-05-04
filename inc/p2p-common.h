@@ -44,27 +44,43 @@
 RSPSSU 0
 RSPSSU 1 78DB70F02D3D49412FE0031F3654BF05
 */
-#define CMD_SSU				"SSU"		/* Send ShortHash UUID */
-#define CMD_SSU_RSP			"RSPSSU"	/* Response */
+#define CMD_SSU				"SSU"		/* Send ShortHash UUID 			*/
+#define CMD_SSU_RSP			"RSPSSU"	/* Response 					*/
 
 /*
 SPREC 010110001101 78DB70F02D3D49412FE0031F3654BF05
 */
-#define CMD_SP_REC			"SPREC"		/* Send UUID to SP for record */
+#define CMD_SP_REC			"SPREC"		/* Send UUID to SP for record 	*/
+
+/*
+OPRFH1/OPRFK1 H1 OURUUID
+*/
+#define CMD_SEND_OPRF_H1	"OPRFH1"	/* Send H1 of OPRF to pa		*/
+#define CMD_SEND_OPRF_K1	"OPRFK1"	/* Send K1 of OPRF to p1 		*/
+
 
 #define SH_FOUND			1
 #define SH_NOT_FOUND		0
 
+#define HEADER_MAX_LEN		10
 #define SHA1_HASH_LENGTH	40
-#define SHA256_HASH_LENGTH	64
-#define SHORT_HASH_LENGTH	12
-#define SP_PEER_UUID_LENGTH	32
+#define SHA256_HASH_LENGTH	64+1
+#define SHORT_HASH_LENGTH	12+1
+#define SP_PEER_UUID_LENGTH	32+1
 #define MSG_TRANS_LENGTH	1024
+#define OPRF_H1_LENGTH		1024
+#define OPRF_K1_LENGTH		OPRF_H1_LENGTH
 
 typedef struct {
 	char sp_peer[SP_PEER_UUID_LENGTH];
 	int own;
 } sp_info_t;
+
+typedef enum {
+	DO_OPRF_H1 = 1,
+	DO_OPRF_K1,
+	DO_OPRF
+} JS_CMD_E;
 
 void print_command_list (void);
 int p_run_command (char *c, char *v);
