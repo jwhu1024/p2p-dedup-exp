@@ -136,10 +136,7 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
 
-	/*
-		1. sends s(h), filehash and our uuid to sp
-		FORMAT: HEADER-SHORTHASH-SELFUUID
-	*/
+	/* SSU SHORTHASH FILEHASH UUID */
 	sprintf (msg_to_send, "%s %s %s %s", CMD_SSU, short_hash, filehash, zyre_uuid (node));
 	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
 	return 1;

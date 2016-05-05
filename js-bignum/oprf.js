@@ -1,6 +1,6 @@
 var fs 		= require('fs'),
-	bignum 	= require("bignum");
-	
+	bignum 	= require("bignum"),
+	crypto 	= require("crypto");
 
 function do_oprf_h1(_fileHash) {
 	var fileHash = _fileHash;
@@ -45,6 +45,11 @@ function do_oprf(_k1) {
 	});
 }
 
+function do_gen_CF_key (_f1) {
+	var fileCipher = crypto.createCipher(CIPHER_ALGO, fileKey);
+	console.log (fileCipher);
+}  
+
 var args = process.argv.slice(2);
 var cmd = args[0];
 
@@ -58,6 +63,10 @@ switch (args[0]) {
 	case "3":
 		do_oprf(args[1]);
 		break;
+	case "4":
+		do_gen_CF_key(args[1]);
+		break;
 	default:
 		console.log('default');
+		break;
 }

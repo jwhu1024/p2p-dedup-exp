@@ -17,6 +17,16 @@ typedef struct zyre_cmd_table {
 	int (*EV_HANDLER) (req_info_t *info);
 } zyre_cmd_table_t;
 
+typedef struct oprf_info {
+	int sh_is_found;
+	char k1[OPRF_K1_LENGTH];
+	char h1[OPRF_H1_LENGTH];
+	char koprf[OPRF_K1_LENGTH];
+	char shorthash[SHORT_HASH_LENGTH];
+	char filehash[SHA256_HASH_LENGTH];
+	char dest_uuid[SP_PEER_UUID_LENGTH];
+} OPRF_S;
+
 int process_event_msg (zmsg_t *msg, req_info_t *info);
 
 #endif /* _P2P_HANDLER_H_ */

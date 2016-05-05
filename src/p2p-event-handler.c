@@ -105,7 +105,7 @@ int event_leave_handler (req_info_t *info)
 
 int event_whisper_handler (req_info_t *info)
 {
-	DBG ("%sGot a whisper message%s\n", RED, RESET);
+	// DBG ("%sGot a whisper message%s\n", RED, RESET);
 	parse_whisper_message (info->node, info->message);
 	free_mem(info);
 	return 1;
@@ -220,30 +220,57 @@ static void prepare_command (JS_CMD_E jscmd, char *value, char *out)
 	return;
 }
 
+static void get_params (OPRF_S *params, char *command, char *message)
+{
+	if (strncmp (CMD_SSU, command, strlen (CMD_SSU)) == 0) {
+		sscanf(message, "%*s %s %s %s", params->shorthash
+		       , params->filehash
+		       , params->dest_uuid);
+	} else if (strncmp (CMD_SSU_RSP, command, strlen (CMD_SSU_RSP)) == 0) {
+		sscanf(message, "%*s %d %s", &params->sh_is_found
+		       , params->shorthash);
+
+		if (params->sh_is_found == 1) {
+			sscanf(message, "%*s %*d %*s %s %s", params->dest_uuid, params->filehash);
+		} else {
+			sscanf(message, "%*s %*d %*s %s", params->filehash);
+		}
+	} else if (strncmp (CMD_SP_REC, command, strlen (CMD_SP_REC)) == 0) {
+		sscanf(message, "%*s %s %s", params->shorthash
+		       , params->dest_uuid);
+	} else if (strncmp (CMD_SEND_OPRF_H1, command, strlen (CMD_SEND_OPRF_H1)) == 0) {
+		sscanf(message, "%*s %s %s %s", params->h1
+		       , params->filehash
+		       , params->dest_uuid);
+	} else if (strncmp (CMD_SEND_OPRF_K1, command, strlen (CMD_SEND_OPRF_K1)) == 0) {
+		sscanf(message, "%*s %s %s %s", params->k1
+		       , params->filehash
+		       , params->dest_uuid);
+	}
+
+	return;
+}
+
 static void parse_whisper_message (zyre_t *node, char *message)
 {
+	DBG ("\n%s=== Received - %s ===%s\n", LIGHT_PURPLE, message, RESET);
+	
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+	OPRF_S oprf_params;
+	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	/*  SSU SHORTHASH FILEHASH UUID */
 	if (strncmp (CMD_SSU, message, strlen (CMD_SSU)) == 0) {
-		/*
-			2. check sh(f) whether is in our table
-			FORMAT: HEADER SHORTHASH SELFUUID
-		*/
 		bool in_list = false;
 		bool is_dup = false;
-		char sz_header[strlen (CMD_SSU)];
-		char sh[SHORT_HASH_LENGTH] = {0};
-		char filehash[SHA256_HASH_LENGTH] = {0};
-		char src_uuid[SP_PEER_UUID_LENGTH] = {0};
 
-		sscanf(message, "%s %s %s %s", sz_header, sh, filehash, src_uuid);
-		DBG ("\n%s=== Received - \"%s\" from %s ===%s\n", LIGHT_PURPLE, message, src_uuid, RESET);
+		get_params (&oprf_params, CMD_SSU, message);
 
-		struct sh_tbl *ptr = list_search_by_shorthash (sh, NULL);
+		struct sh_tbl *ptr = list_search_by_shorthash (oprf_params.shorthash, NULL);
 		if (NULL == ptr) {
-			DBG ("%sSearch [sh = %s] failed, no such element found%s\n", YELLOW, sh, RESET);
-			// store_conn_history (sh, src_uuid);
+			DBG ("%sSearch [sh = %s] failed, no such element found%s\n", YELLOW, oprf_params.shorthash, RESET);
 		} else {
-			if (strncmp (ptr->uuid, src_uuid, SP_PEER_UUID_LENGTH) != 0) {
-				DBG ("%sSearch passed [sh = %s, uuid = %s]%s\n", YELLOW, sh, ptr->uuid, RESET);
+			if (strncmp (ptr->uuid, oprf_params.dest_uuid, SP_PEER_UUID_LENGTH) != 0) {
+				DBG ("%sSearch passed [shorthash = %s, uuid = %s]%s\n", YELLOW, oprf_params.shorthash, ptr->uuid, RESET);
 			} else {
 				DBG ("Discard this dedup if the pa is ourself\n");
 				is_dup = true;
@@ -253,128 +280,89 @@ static void parse_whisper_message (zyre_t *node, char *message)
 
 		if (node) {
 			int peer_is_online = -1;
-			char msg_to_send[MSG_TRANS_LENGTH] = {0};
 
 			if (in_list == true && is_dup == false) {
 				peer_is_online = is_peer_online (node, ptr->uuid);
 			}
 
-			DBG ("%sin_list: %s, peer_is_online: %d%s\n", LIGHT_BLUE
+			DBG ("%sin_list: %s, peer_is_online: %d%s\n" , LIGHT_BLUE
 			     , (in_list == true) ? "true" : "false"
 			     , peer_is_online
 			     , RESET);
 
-			/*
-				2-1. send back the uuid which have this shorthash if online
-				FORMAT: HEADER-FOUND-SH-UUID-FILEHASH
-			*/
 			if (in_list == true && peer_is_online == 1) {
 				DBG ("%speer online: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
-				sprintf (msg_to_send, "%s %d %s %s %s", CMD_SSU_RSP, SH_FOUND, sh, ptr->uuid, filehash);
-			}
-			/*
-				2-2. tell the p1 which sh not found or not in list
-				FORMAT: HEADER-NOTFOUND-SH-FILEHASH
-			*/
-			else {
+				sprintf (msg_to_send, "%s %d %s %s %s", CMD_SSU_RSP, SH_FOUND, oprf_params.shorthash, ptr->uuid, oprf_params.filehash);
+			} else {
 				DBG ("%speer offline: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
-				sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP, SH_NOT_FOUND, sh, filehash);
+				sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP, SH_NOT_FOUND, oprf_params.shorthash, oprf_params.filehash);
 			}
 
-			src_uuid[SP_PEER_UUID_LENGTH] = '\0';
+			oprf_params.dest_uuid[SP_PEER_UUID_LENGTH] = '\0';
 			msg_to_send[strlen(msg_to_send)] = '\0';
-			send_whisper_msg (node, msg_to_send, src_uuid);
+			send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
 		} else {
 			DBG ("node is not available\n");
 		}
-	} else if (strncmp (CMD_SSU_RSP, message, strlen (CMD_SSU_RSP)) == 0) {
-		// RSPSSU 0 010110001101 58dd5518cc2c29da0a650ffdb18605f5d7ae404b8d8304e4c6992e4df3addf24
-		// RSPSSU SHISFOUND SHORTHASH FILEHASH
-		// RSPSSU 1 010110001101 78DB70F02D3D49412FE0031F3654BF05 58dd5518cc2c29da0a650ffdb18605f5d7ae404b8d8304e4c6992e4df3addf24
-		// RSPSSU SHISFOUND SHORTHASH DEST-UUID FILEHASH
-		int sh_is_found;
-		char sz_header[strlen (CMD_SSU_RSP)];
-		char dest_uuid[SP_PEER_UUID_LENGTH] = {0};
-		char sh[SHORT_HASH_LENGTH] = {0};
-		char filehash[SHA256_HASH_LENGTH] = {0};
-		char msg_to_send[MSG_TRANS_LENGTH] = {0};
+	}
+	/*  RSPSSU SHFOUND SHORTHASH UUID FILEHASH
+		RSPSSU SHNOTFOUND SHORTHASH FILEHASH 	*/
+	else if (strncmp (CMD_SSU_RSP, message, strlen (CMD_SSU_RSP)) == 0) {
+		get_params (&oprf_params, CMD_SSU_RSP, message);
 
-		sscanf(message, "%s %d %s", sz_header, &sh_is_found, sh);
-
-		if (sh_is_found == 1) {
-			sscanf(message, "%*s %*d %*s %s %s", dest_uuid, filehash);
-		} else {
-			sscanf(message, "%*s %*d %*s %s", filehash);
-			random_select_peer (node , dest_uuid);
+		if (oprf_params.sh_is_found == 0) {
+			random_select_peer (node , oprf_params.dest_uuid);
 		}
 
-		DBG ("\n%s=== Received - %s %d %s %s %s ===%s\n", LIGHT_PURPLE, sz_header, sh_is_found, sh, dest_uuid, filehash, RESET);
+		sprintf (msg_to_send, "%s %s %s", CMD_SP_REC
+		         , oprf_params.shorthash
+		         , zyre_uuid (node));
 
-		/*
-			Send the selected peer uuid to SP
-			SPREC SHORTHASH SELF-UUID
-			SPREC 010110001101 78DB70F02D3D49412FE0031F3654BF05
-		*/
-		sprintf (msg_to_send, "%s %s %s", CMD_SP_REC, sh, zyre_uuid (node));
 		msg_to_send[strlen(msg_to_send)] = '\0';
 		send_whisper_msg (node, msg_to_send, sp_info.sp_peer);
 
-		// OPRF begin... step 1
-		char h1[OPRF_H1_LENGTH] = {0};
-		prepare_command (DO_OPRF_H1, filehash, h1);
+		// calculate h1
+		prepare_command (DO_OPRF_H1, oprf_params.filehash, oprf_params.h1);
 
 		memset (msg_to_send, '\0', sizeof(msg_to_send));
-		sprintf (msg_to_send, "%s %s %s", CMD_SEND_OPRF_H1, h1, zyre_uuid (node));
+		sprintf (msg_to_send, "%s %s %s %s", CMD_SEND_OPRF_H1
+		         , oprf_params.h1
+		         , oprf_params.filehash
+		         , zyre_uuid (node));
+
 		msg_to_send[strlen(msg_to_send)] = '\0';
-		send_whisper_msg (node, msg_to_send, dest_uuid);
-	} else if (strncmp (CMD_SP_REC, message, strlen (CMD_SP_REC)) == 0) {
-		/*
-			Received the selected peer uuid by client peer
-			SPREC SHORTHASH SELF-UUID
-			SPREC 010110001101 78DB70F02D3D49412FE0031F3654BF05
-		*/
-		char uuid[SP_PEER_UUID_LENGTH] = {0};
-		char sh[SHORT_HASH_LENGTH] = {0};
+		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+	}
+	/*  SPREC SHORTHASH UUID */
+	else if (strncmp (CMD_SP_REC, message, strlen (CMD_SP_REC)) == 0) {
+		get_params (&oprf_params, CMD_SP_REC, message);
+		store_conn_history (oprf_params.shorthash, oprf_params.dest_uuid);
+	}
+	/* OPRFH1 H1 FILEHASH UUID */
+	else if (strncmp (CMD_SEND_OPRF_H1, message, strlen (CMD_SEND_OPRF_H1)) == 0) {
+		get_params (&oprf_params, CMD_SEND_OPRF_H1, message);
 
-		sscanf(message, "%*s %s %s", sh, uuid);
+		// calculate k1
+		prepare_command (DO_OPRF_K1, oprf_params.h1, oprf_params.k1);
 
-		store_conn_history (sh, uuid);
-		DBG ("\n%s=== Received - %s %s %s ===%s\n", LIGHT_PURPLE, CMD_SP_REC, sh, uuid, RESET);
-	} else if (strncmp (CMD_SEND_OPRF_H1, message, strlen (CMD_SEND_OPRF_H1)) == 0) {
-		/*
-			OPRFH1/OPRFK1 H1/K1 UUID
-		*/
-		char msg_to_send[MSG_TRANS_LENGTH] = {0};
-		char uuid[SP_PEER_UUID_LENGTH] = {0};
-		char h1[OPRF_H1_LENGTH] = {0};
+		sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_OPRF_K1
+		         , oprf_params.k1
+		         , oprf_params.filehash
+		         , zyre_uuid (node));
 
-		sscanf(message, "%*s %s %s", h1, uuid);
-
-		DBG ("\n%s=== Received - %s %s %s ===%s\n", LIGHT_PURPLE, CMD_SEND_OPRF_H1, h1, uuid, RESET);
-
-		// OPRF step 2
-		char k1[OPRF_K1_LENGTH] = {0};
-		prepare_command (DO_OPRF_K1, h1, k1);
-
-		sprintf (msg_to_send, "%s %s %s", CMD_SEND_OPRF_K1, k1, zyre_uuid (node));
 		msg_to_send[strlen(msg_to_send)] = '\0';
-		send_whisper_msg (node, msg_to_send, uuid);
-	} else if (strncmp (CMD_SEND_OPRF_K1, message, strlen (CMD_SEND_OPRF_K1)) == 0) {
-		/*
-			OPRFH1/OPRFK1 H1/K1 UUID
-		*/
-		char uuid[SP_PEER_UUID_LENGTH] = {0};
-		char k1[OPRF_K1_LENGTH] = {0};
+		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+	}
+	/* OPRFK1 K1 FILEHASH UUID */
+	else if (strncmp (CMD_SEND_OPRF_K1, message, strlen (CMD_SEND_OPRF_K1)) == 0) {
+		/* OPRFH1/OPRFK1 H1/K1 FILEHASH UUID */
+		get_params (&oprf_params, CMD_SEND_OPRF_K1, message);
 
-		sscanf(message, "%*s %s %s", k1, uuid);
+		// calculate OPRF's value
+		prepare_command (DO_OPRF, oprf_params.k1, oprf_params.koprf);
 
-		DBG ("\n%s=== Received - %s %s %s ===%s\n", LIGHT_PURPLE, CMD_SEND_OPRF_K1, k1, uuid, RESET);
-
-		// OPRF step 3
-		char koprf[OPRF_K1_LENGTH] = {0};
-		prepare_command (DO_OPRF, k1, koprf);
-
-		DBG ("\n\nkoprf: %s\n", koprf);
+		DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
+		DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
 	}
 	return;
 }
