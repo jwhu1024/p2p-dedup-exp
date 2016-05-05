@@ -373,6 +373,8 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		// OPRF step 3
 		char koprf[OPRF_K1_LENGTH] = {0};
 		prepare_command (DO_OPRF, k1, koprf);
+
+		DBG ("\n\nkoprf: %s\n", koprf);
 	}
 	return;
 }

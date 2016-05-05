@@ -2,6 +2,7 @@
 
 #include "p2p-cmd-handler.h"
 #include "p2p-encrypt.h"
+#include "p2p-common.h"
 
 extern const char *HEADER_VALUE;
 extern const char *P2P_GROUP_NAME;
@@ -113,6 +114,11 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 	sp_info_t *sp_p = &sp_info;
 
 	DBG ("%s===== Start our dedup process =====%s\n", LIGHT_PURPLE, RESET);
+
+	// clear some temp files
+	char out[16];
+	p_run_command ("rm /tmp/n", out);
+	p_run_command ("rm /tmp/r", out);
 
 	if (sp_p->sp_peer[0] == '\0') {
 		DBG ("%sCan't do OPRF before we known who is the sp, discard it! %s\n", LIGHT_RED, RESET);
