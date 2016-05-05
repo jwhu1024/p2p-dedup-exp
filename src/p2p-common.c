@@ -31,14 +31,14 @@ int _system (const char *fmt, ...)
 int p_run_command (char *c, char *v)
 {
 	FILE *fp = NULL;
-	char buf[256] = {0};
+	char buf[1024] = {0};
 
 	memset (buf, 0x0, sizeof(buf));
 	fp = popen (c, "r");
 	fread(buf, sizeof(char), sizeof(buf), fp);
 	pclose (fp);
 	buf[strlen(buf) - 1] = '\0';
-	strncpy(v, buf, sizeof(buf) - 1 );
+	strncpy(v, buf, strlen(buf) + 1);
 
 	return strlen(v);
 }
@@ -46,7 +46,13 @@ int p_run_command (char *c, char *v)
 int is_valid_short_hash (char sh[])
 {
 	int i;
-	for (i = 0; i < strlen (sh); ++i) {
+	int len = strlen (sh);
+
+	if (len > 12) {
+		return 0;
+	}
+	
+	for (i = 0; i < len; ++i) {
 		if (sh[i] != '0' && sh[i] != '1') {
 			printf("sh[%d] %c not 0 or 1\n", i, sh[i]);
 			return 0;

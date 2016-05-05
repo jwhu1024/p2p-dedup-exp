@@ -77,28 +77,26 @@ static char * hex_to_bin_quad (unsigned char c)
 
 void short_hash_calc (char *f, unsigned char short_hash[], unsigned char filehash[])
 {
-	// unsigned char hash[SHA256_HASH_LENGTH] = {0};
 	create_sha256_hash (f, filehash);
 
 	unsigned char sha1hash[SHA1_HASH_LENGTH] = {0};
 	create_sha1_hash (filehash, sha1hash);
 
 	int i;
-	// char short_hash[SHORT_HASH_LENGTH * 4 + 1] = {0};
 	memset (short_hash, '\0', SHORT_HASH_LENGTH);
 
-	for (i = 0; i < SHORT_HASH_LENGTH/4; i++) {
+	for (i = 0; i < (SHORT_HASH_LENGTH-1)/4; i++) {
 		char *bstr = hex_to_bin_quad (filehash[i]);
 		if (bstr) {
 			strncat ((char *)short_hash, bstr, 4);
 		}
 	}
 	
-#ifdef __DEBUG__	
-	// dump_hash (filehash, SHA256_HASH_LENGTH);
-	// dump_hash (sha1hash, SHA1_HASH_LENGTH);
+#ifdef __DEBUG__
+	// DBG ("filehash: %s\n", filehash);
+	// DBG ("sha1hash: %s\n", sha1hash);
 	// DBG ("short_hash : %s\n", short_hash);
-	// DBG ("is_valid: %d\n", is_valid_short_hash ((char *) short_hash););
+	// DBG ("is_valid: %d\n", is_valid_short_hash ((char *) short_hash));
 #endif
 
 	return;

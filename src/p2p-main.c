@@ -101,7 +101,7 @@ static void dedup_actor (zsock_t *pipe, void *args)
 			memset(&ri, '\0', sizeof(req_info_t));
 
 #ifdef __DEBUG__
-			zmsg_dump (msg);
+			// zmsg_dump (msg);
 #endif /* __DEBUG__ */
 
 			ri.node = node;

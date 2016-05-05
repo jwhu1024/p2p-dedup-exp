@@ -228,6 +228,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 			FORMAT: HEADER SHORTHASH SELFUUID
 		*/
 		bool in_list = false;
+		bool is_dup = false;
 		char sz_header[strlen (CMD_SSU)];
 		char sh[SHORT_HASH_LENGTH] = {0};
 		char filehash[SHA256_HASH_LENGTH] = {0};
@@ -242,18 +243,19 @@ static void parse_whisper_message (zyre_t *node, char *message)
 			// store_conn_history (sh, src_uuid);
 		} else {
 			if (strncmp (ptr->uuid, src_uuid, SP_PEER_UUID_LENGTH) != 0) {
-				in_list = true;
 				DBG ("%sSearch passed [sh = %s, uuid = %s]%s\n", YELLOW, sh, ptr->uuid, RESET);
 			} else {
 				DBG ("Discard this dedup if the pa is ourself\n");
+				is_dup = true;
 			}
+			in_list = true;
 		}
 
 		if (node) {
 			int peer_is_online = -1;
 			char msg_to_send[MSG_TRANS_LENGTH] = {0};
 
-			if (in_list) {
+			if (in_list == true && is_dup == false) {
 				peer_is_online = is_peer_online (node, ptr->uuid);
 			}
 
@@ -324,7 +326,6 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		memset (msg_to_send, '\0', sizeof(msg_to_send));
 		sprintf (msg_to_send, "%s %s %s", CMD_SEND_OPRF_H1, h1, zyre_uuid (node));
 		msg_to_send[strlen(msg_to_send)] = '\0';
-		sleep (1);
 		send_whisper_msg (node, msg_to_send, dest_uuid);
 	} else if (strncmp (CMD_SP_REC, message, strlen (CMD_SP_REC)) == 0) {
 		/*

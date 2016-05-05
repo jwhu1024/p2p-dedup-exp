@@ -124,7 +124,7 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 		return 0;
 	}
 
-	unsigned char short_hash[13];
+	unsigned char short_hash[SHORT_HASH_LENGTH];
 	unsigned char filehash[SHA256_HASH_LENGTH];
 	short_hash_calc ("/vagrant/a", short_hash, filehash);
 

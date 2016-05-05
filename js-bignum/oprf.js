@@ -10,7 +10,7 @@ function do_oprf_h1 (_fileHash) {
 	h1 = bignum.mul(h1, mask);
 	h1 = bignum.mod(h1, n);
 	h1 = h1.toString(10);
-	console.log(h1);
+	console.log (h1);
 }
 
 function do_oprf_k1 (_h1) {
@@ -20,7 +20,7 @@ function do_oprf_k1 (_h1) {
 	var n = bignum('145859173040309229955833252345654325463844070602921285056139874043635346668941428484651128442619349098391282012811366461830349732301204981399638512025284782925269077642090448376311362217230794213004405021482693447818117628194854565751827513600850925224038365314953038266614774662696559105571178095070057414419');
 	var k1 = bignum.powm(h1, d, n);
 	var k1 = k1.toString(10);
-	console.log(k1);
+	console.log (k1);
 }
 
 function do_oprf (_k1) {
@@ -32,7 +32,7 @@ function do_oprf (_k1) {
 	koprf = bignum.mul(k1, x1);
 	koprf = bignum.mod(koprf, n);
 	koprf = koprf.toString(10);
-	console.log(koprf);
+	console.log (koprf);
 }
 
 var args = process.argv.slice(2);
@@ -49,5 +49,5 @@ switch (args[0]) {
 		do_oprf (args[1]);
 		break;
 	default:
-		console.log('default');
+		console.log ('default');
 }
