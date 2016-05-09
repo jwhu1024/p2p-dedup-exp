@@ -86,6 +86,11 @@ typedef enum {
 	DO_OPRF
 } JS_CMD_E;
 
+typedef enum {
+	SEND_KEY = 1,
+	DO_UPLOAD
+} JS_CMD2_E;
+
 void print_command_list (void);
 int p_run_command (char *c, char *v);
 int _system (const char *fmt, ...);
