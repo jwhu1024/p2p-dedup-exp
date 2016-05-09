@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 var zmq = require('zmq'),
 	responder = zmq.socket('rep'),
 	history = new Array();
@@ -29,10 +27,10 @@ responder.on('message', function(request) {
 		case 1: // 1. do key searching
 			key_search(k, function(res) {
 				if (res == 1) {
-					responder.send("DONTUPLOAD");
+					responder.send(0);	// return 0 -> Don't need to upload again
 				} else {
-					key_add(k); // add to history
-					responder.send("UPLOAD"); // send reply back to client.
+					key_add(k); 		// add to history
+					responder.send(1); 	// return 1 -> Upload the new file
 				}
 			});
 			break;

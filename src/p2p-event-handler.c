@@ -377,11 +377,19 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		// calculate OPRF's value
 		do_oprf_with_js (DO_OPRF, oprf_params.k1, oprf_params.koprf);
 
-		// calculate h1
-		send_key_to_fakecloud (DO_OPRF_H1, oprf_params.filehash, oprf_params.need_upload);
-		
+		// check the key with server
+		send_key_to_fakecloud (DO_OPRF_H1, oprf_params.koprf, oprf_params.need_upload);
+
+		// check if we need to upload
+		if (1 == atoi(oprf_params.need_upload)) {
+			DBG ("Ready to upload file to server...\n");
+		} else {
+			// we don't need to upload the same file to server again
+		}
+
 		DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
 		DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
+		DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
 	}
 	return;
 }
