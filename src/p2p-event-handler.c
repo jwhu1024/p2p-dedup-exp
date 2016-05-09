@@ -211,7 +211,7 @@ static int random_select_peer (zyre_t *node, char *p)
 	return 0;
 }
 
-static void prepare_command (JS_CMD_E jscmd, char *value, char *out)
+static void do_oprf_with_js (JS_CMD_E jscmd, char *value, char *out)
 {
 	char cmd[1024] = {0};
 
@@ -254,7 +254,7 @@ static void get_params (OPRF_S *params, char *command, char *message)
 static void parse_whisper_message (zyre_t *node, char *message)
 {
 	DBG ("\n%s=== Received - %s ===%s\n", LIGHT_PURPLE, message, RESET);
-	
+
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
 	OPRF_S oprf_params;
 	memset (&oprf_params, '\0', sizeof (OPRF_S));
@@ -292,10 +292,17 @@ static void parse_whisper_message (zyre_t *node, char *message)
 
 			if (in_list == true && peer_is_online == 1) {
 				DBG ("%speer online: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
-				sprintf (msg_to_send, "%s %d %s %s %s", CMD_SSU_RSP, SH_FOUND, oprf_params.shorthash, ptr->uuid, oprf_params.filehash);
+				sprintf (msg_to_send, "%s %d %s %s %s", CMD_SSU_RSP
+				         , SH_FOUND
+				         , oprf_params.shorthash
+				         , ptr->uuid
+				         , oprf_params.filehash);
 			} else {
 				DBG ("%speer offline: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
-				sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP, SH_NOT_FOUND, oprf_params.shorthash, oprf_params.filehash);
+				sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP
+				         , SH_NOT_FOUND
+				         , oprf_params.shorthash
+				         , oprf_params.filehash);
 			}
 
 			oprf_params.dest_uuid[SP_PEER_UUID_LENGTH] = '\0';
@@ -322,7 +329,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		send_whisper_msg (node, msg_to_send, sp_info.sp_peer);
 
 		// calculate h1
-		prepare_command (DO_OPRF_H1, oprf_params.filehash, oprf_params.h1);
+		do_oprf_with_js (DO_OPRF_H1, oprf_params.filehash, oprf_params.h1);
 
 		memset (msg_to_send, '\0', sizeof(msg_to_send));
 		sprintf (msg_to_send, "%s %s %s %s", CMD_SEND_OPRF_H1
@@ -343,7 +350,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		get_params (&oprf_params, CMD_SEND_OPRF_H1, message);
 
 		// calculate k1
-		prepare_command (DO_OPRF_K1, oprf_params.h1, oprf_params.k1);
+		do_oprf_with_js (DO_OPRF_K1, oprf_params.h1, oprf_params.k1);
 
 		sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_OPRF_K1
 		         , oprf_params.k1
@@ -359,7 +366,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		get_params (&oprf_params, CMD_SEND_OPRF_K1, message);
 
 		// calculate OPRF's value
-		prepare_command (DO_OPRF, oprf_params.k1, oprf_params.koprf);
+		do_oprf_with_js (DO_OPRF, oprf_params.k1, oprf_params.koprf);
 
 		DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
 		DBG ("\n\nkoprf: %s\n", oprf_params.koprf);

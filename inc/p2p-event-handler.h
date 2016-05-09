@@ -18,6 +18,7 @@ typedef struct zyre_cmd_table {
 } zyre_cmd_table_t;
 
 typedef struct oprf_info {
+	char command[10];
 	int sh_is_found;
 	char k1[OPRF_K1_LENGTH];
 	char h1[OPRF_H1_LENGTH];

@@ -15,7 +15,6 @@ static int process_terminate 	(zyre_t *node, zmsg_t *msg);
 static int process_shout 		(zyre_t *node, zmsg_t *msg);
 static int process_whisper 		(zyre_t *node, zmsg_t *msg);
 static int query_online_peers 	(zyre_t *node, zmsg_t *msg);
-// static int sp_notify_peers		(zyre_t *node, zmsg_t *msg);
 static int process_set_sp 		(zyre_t *node, zmsg_t *msg);
 static int process_start 		(zyre_t *node, zmsg_t *msg);
 
