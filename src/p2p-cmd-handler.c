@@ -127,9 +127,8 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 	DBG ("%s===== Start our dedup process =====%s\n", LIGHT_PURPLE, RESET);
 
 	// clear some temp files
-	char out[16];
-	p_run_command ("rm /tmp/n", out);
-	p_run_command ("rm /tmp/r", out);
+	_system ("rm /tmp/n");
+	_system ("rm /tmp/r");
 
 	if (sp_p->sp_peer[0] == '\0') {
 		DBG ("%sCan't do OPRF before we known who is the sp, discard it! %s\n", LIGHT_RED, RESET);

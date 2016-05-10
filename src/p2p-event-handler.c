@@ -188,19 +188,32 @@ static int random_select_peer (zyre_t *node, char *p)
 {
 	time_t t;
 	srand((unsigned) time(&t));
+	int peers = 0, sz = 0, rand_num = 0;
+	char *self_uuid = (char *) zyre_uuid (node);
+	zlist_t *plist;
 
+REPEAT:
 	// random select a peer to do dedup
-	int peers = 0;
-	zlist_t *plist = zyre_peers (node);
-	int sz = (int) zlist_size (plist);
+	peers = 0;
+	plist = zyre_peers (node);
+	sz = (int) zlist_size (plist);
 
-	int rand_num = rand() % sz;
-	// DBG ("rand_num: %d\n", rand_num);
+	rand_num = rand() % sz;
 
 	if (sz > 0) {
+		peers = 0;
 		while (zlist_next(plist) != NULL) {
+			char *tmp_uuid = (char *) zlist_pop (plist);
+
 			if (peers == rand_num) {
-				memcpy(p, (char *) zlist_pop (plist), SP_PEER_UUID_LENGTH);
+				if (strncmp (self_uuid, tmp_uuid, SP_PEER_UUID_LENGTH) == 0 		||
+					strncmp (sp_info.sp_peer, tmp_uuid, SP_PEER_UUID_LENGTH) == 0) 	{
+					if ((sz / 2) > rand_num)	rand_num++;
+					else					rand_num--;
+					goto REPEAT;
+				}
+
+				memcpy(p, tmp_uuid, SP_PEER_UUID_LENGTH);
 				// DBG ("random select peer: %s\n", p);
 				return 1;
 			}
@@ -318,6 +331,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 				         , ptr->uuid
 				         , oprf_params.filehash);
 			} else {
+				list_delete_by_shorthash (oprf_params.shorthash);
 				DBG ("%speer offline: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
 				sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP
 				         , SH_NOT_FOUND
@@ -343,7 +357,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 
 		sprintf (msg_to_send, "%s %s %s", CMD_SP_REC
 		         , oprf_params.shorthash
-		         , zyre_uuid (node));
+		         , oprf_params.dest_uuid);
 
 		msg_to_send[strlen(msg_to_send)] = '\0';
 		send_whisper_msg (node, msg_to_send, sp_info.sp_peer);
