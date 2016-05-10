@@ -78,7 +78,7 @@ static void dedup_actor (zsock_t *pipe, void *args)
 			zmsg_t *msg = zmsg_recv (which);
 			if (!msg)
 				break;
-			
+
 			// zmsg_dump (msg);
 
 			char *command = zmsg_popstr(msg);
@@ -177,6 +177,7 @@ int main (int argc, char *argv [])
 		} else if (strncmp(command, "4", strlen("4")) == 0) {
 			zstr_sendx (d_actor, "SETSP", "dummy", NULL);
 		} else if (strncmp(command, "5", strlen("5")) == 0) {
+			printf("Please input the file to upload: ");
 			if (!fgets (message, sizeof(message), stdin))
 				break;
 			message [strlen (message) - 1] = 0;
