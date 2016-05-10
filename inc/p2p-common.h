@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <linux/limits.h>
 
 #include "zyre.h"
 #include "czmq.h"
@@ -101,5 +102,6 @@ void print_command_list (void);
 int p_run_command (char *c, char *v);
 int _system (const char *fmt, ...);
 int is_valid_short_hash (char sh[]);
+int is_file_exist(const char *path);
 
 #endif /* _P2P_UTILS_H_ */

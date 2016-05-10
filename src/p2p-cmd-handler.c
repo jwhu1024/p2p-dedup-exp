@@ -9,6 +9,8 @@ extern const char *P2P_GROUP_NAME;
 extern sp_info_t sp_info;
 extern struct sh_tbl *sh_table;
 
+char g_filename[PATH_MAX];
+
 bool terminated = false;
 
 static int process_terminate 	(zyre_t *node, zmsg_t *msg);
@@ -110,6 +112,16 @@ static int process_set_sp (zyre_t *node, zmsg_t *msg)
 
 static int process_start (zyre_t *node, zmsg_t *msg)
 {
+	char *fn = zmsg_popstr (msg);
+
+	memset (g_filename, '\0', PATH_MAX);
+	strncpy (g_filename, fn, strlen (fn));
+	
+	if (is_file_exist(g_filename) == 0) {
+		DBG ("%s===== File NOT exist return zero %s =====%s\n", LIGHT_PURPLE, g_filename, RESET);
+		return 0;
+	}
+
 	sp_info_t *sp_p = &sp_info;
 
 	DBG ("%s===== Start our dedup process =====%s\n", LIGHT_PURPLE, RESET);
@@ -131,13 +143,15 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 
 	unsigned char short_hash[SHORT_HASH_LENGTH];
 	unsigned char filehash[SHA256_HASH_LENGTH];
-	short_hash_calc ("/vagrant/a", short_hash, filehash);
+	short_hash_calc (fn, short_hash, filehash);
 
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
 
 	/* SSU SHORTHASH FILEHASH UUID */
 	sprintf (msg_to_send, "%s %s %s %s", CMD_SSU, short_hash, filehash, zyre_uuid (node));
 	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
+
+	if (fn)	free (fn);
 	return 1;
 }
 

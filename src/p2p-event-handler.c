@@ -10,6 +10,7 @@
 extern sp_info_t sp_info;
 extern const char *HEADER_VALUE;
 extern const char *P2P_GROUP_NAME;
+extern char g_filename[PATH_MAX];
 
 struct sh_tbl *sh_table = NULL;
 
@@ -263,6 +264,12 @@ static void send_key_to_fakecloud (char *ser_ip, int ser_port, char *key, char *
 	return;
 }
 
+static void upload_file_to_fakecloud (char *ser_ip, int ser_port)
+{
+	_system ("http -f POST http://%s:%d/ file@%s", ser_ip, ser_port, g_filename);
+	return;
+}
+
 static void parse_whisper_message (zyre_t *node, char *message)
 {
 	DBG ("\n%s=== Received - %s ===%s\n", LIGHT_PURPLE, message, RESET);
@@ -270,6 +277,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
 	OPRF_S oprf_params;
 	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	
 	/*  SSU SHORTHASH FILEHASH UUID */
 	if (strncmp (CMD_SSU, message, strlen (CMD_SSU)) == 0) {
 		bool in_list = false;
@@ -386,6 +394,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		// check if we need to upload
 		if (1 == atoi(oprf_params.need_upload)) {
 			DBG ("Ready to upload file to server...\n");
+			upload_file_to_fakecloud (SERVER_IP, SERVER_PORT);
 		} else {
 			// we don't need to upload the same file to server again
 		}

@@ -177,7 +177,10 @@ int main (int argc, char *argv [])
 		} else if (strncmp(command, "4", strlen("4")) == 0) {
 			zstr_sendx (d_actor, "SETSP", "dummy", NULL);
 		} else if (strncmp(command, "5", strlen("5")) == 0) {
-			zstr_sendx (d_actor, "START", "dummy", NULL);
+			if (!fgets (message, sizeof(message), stdin))
+				break;
+			message [strlen (message) - 1] = 0;
+			zstr_sendx (d_actor, "START", message, NULL);
 		} else {
 			DBG ("Unknown command...\n");
 		}

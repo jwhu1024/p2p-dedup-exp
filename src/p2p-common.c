@@ -1,5 +1,17 @@
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "p2p-common.h"
+
+int is_file_exist (const char *path)
+{
+	if ( access( path, F_OK ) != -1 )
+		return 1;
+	else
+		return 0;
+}
 
 void print_command_list (void)
 {
@@ -51,7 +63,7 @@ int is_valid_short_hash (char sh[])
 	if (len > 12) {
 		return 0;
 	}
-	
+
 	for (i = 0; i < len; ++i) {
 		if (sh[i] != '0' && sh[i] != '1') {
 			printf("sh[%d] %c not 0 or 1\n", i, sh[i]);
