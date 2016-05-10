@@ -4,6 +4,7 @@ var http 	= require('http'),
 	fs 		= require('fs'),
 	util 	= require('util'),
 	Busboy 	= require('busboy'),
+	mkdirp 	= require("mkdirp"),
 	history = new Array();
 
 function key_search(_key, _cb) {
@@ -20,6 +21,10 @@ function key_add(_key) {
 	history.push(_key);
 }
 
+mkdirp("/tmp/uploads", function(err) { 
+    // path exists unless there was an error
+});
+
 http.createServer(function (req, res) {
 	var rsp = 0;
 	if (req.method === 'POST') {
@@ -27,8 +32,9 @@ http.createServer(function (req, res) {
 			headers: req.headers
 		});
 		busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
-			// console.log("Save the file to the path -> " + path.join(os.tmpDir(), filename));
-			file.pipe(fs.createWriteStream(path.join(os.tmpDir(), filename)));
+			var saveTo = path.join(os.tmpDir() + "/uploads/" + filename);
+			console.log("Save the file to the path -> " + saveTo);
+			file.pipe(fs.createWriteStream(saveTo));
 		});
 		busboy.on('field', function (fieldname, val, fieldnameTruncated, valTruncated) {
 			var value = util.inspect(val);
