@@ -33,14 +33,12 @@ http.createServer(function (req, res) {
 		});
 		busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
 			file.pipe(fs.createWriteStream(path.join(os.tmpDir() + "/uploads/" + filename)));
+			console.log("File \"" + path.join(os.tmpDir() + "/uploads/" + filename) + "\" " + "uploaded.");
 		});
 		busboy.on('field', function (fieldname, val, fieldnameTruncated, valTruncated) {
 			var value = util.inspect(val);
-			// console.log('Field [' + fieldname + ']: value: ' + value);
-
 			if (fieldname === "key") {
 				key_search(util.inspect(val), function (isFound) {
-					console.log ("isFound -> " + isFound);
 					if (isFound == 0) {
 						rsp = 1;
 						key_add(value.toString());

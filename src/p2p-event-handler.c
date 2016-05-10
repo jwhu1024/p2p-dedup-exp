@@ -258,7 +258,7 @@ static void send_key_to_fakecloud (char *ser_ip, int ser_port, char *key, char *
 
 	_system ("rm -f /tmp/need_upload");
 	_system ("http -b -f POST %s:%d key=%s > /tmp/need_upload && echo "" >> /tmp/need_upload", ser_ip, ser_port, key);
-	
+
 	sprintf (cmd, "cat /tmp/need_upload");
 	p_run_command (cmd, out);
 	return;
@@ -277,7 +277,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 	char msg_to_send[MSG_TRANS_LENGTH] = {0};
 	OPRF_S oprf_params;
 	memset (&oprf_params, '\0', sizeof (OPRF_S));
-	
+
 	/*  SSU SHORTHASH FILEHASH UUID */
 	if (strncmp (CMD_SSU, message, strlen (CMD_SSU)) == 0) {
 		bool in_list = false;
@@ -399,17 +399,9 @@ static void parse_whisper_message (zyre_t *node, char *message)
 			// we don't need to upload the same file to server again
 		}
 
-		DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
-		DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
-		DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
+		// DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
+		// DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
+		// DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
 	}
 	return;
 }
-
-// static void get_ip_address (char *iface, char *out)
-// {
-// 	char cmd[1024] = {0};
-
-// 	sprintf (cmd, "ifconfig %s 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'", iface);
-// 	p_run_command (cmd, out);
-// }
