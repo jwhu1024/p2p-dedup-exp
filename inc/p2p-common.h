@@ -38,6 +38,9 @@
 #define WHITE 				"\033[1;37m"
 #define RESET 				"\033[0m"
 
+#define SERVER_IP			"192.168.1.112"
+#define SERVER_PORT			3000
+
 #define CMD_SP				"SP"		/* SetSP Header */
 
 /*
@@ -57,11 +60,14 @@ SPREC 010110001101 78DB70F02D3D49412FE0031F3654BF05
 #define CMD_SP_REC			"SPREC"		/* Send UUID to SP for record 	*/
 
 /*
-OPRFH1/OPRFK1 H1/K1 FILEHASH OURUUID
+OPRFH1 H1 FILEHASH OURUUID
 */
 #define CMD_SEND_OPRF_H1	"OPRFH1"	/* Send H1 of OPRF to pa		*/
-#define CMD_SEND_OPRF_K1	"OPRFK1"	/* Send K1 of OPRF to p1 		*/
 
+/*
+OPRFK1 K1 FILEHASH OURUUID
+*/
+#define CMD_SEND_OPRF_K1	"OPRFK1"	/* Send K1 of OPRF to p1 		*/
 
 #define SH_FOUND			1
 #define SH_NOT_FOUND		0

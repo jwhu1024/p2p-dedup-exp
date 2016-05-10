@@ -251,11 +251,14 @@ static void get_params (OPRF_S *params, char *command, char *message)
 	return;
 }
 
-static void send_key_to_fakecloud (JS_CMD2_E jscmd, char *value, char *out)
+static void send_key_to_fakecloud (char *ser_ip, int ser_port, char *key, char *out)
 {
 	char cmd[1024] = {0};
 
-	sprintf (cmd, "node ../js/cli.js %d-%s", (int) jscmd, value);
+	_system ("rm -f /tmp/need_upload");
+	_system ("http -b -f POST %s:%d key=%s > /tmp/need_upload && echo "" >> /tmp/need_upload", ser_ip, ser_port, key);
+	
+	sprintf (cmd, "cat /tmp/need_upload");
 	p_run_command (cmd, out);
 	return;
 }
@@ -378,7 +381,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		do_oprf_with_js (DO_OPRF, oprf_params.k1, oprf_params.koprf);
 
 		// check the key with server
-		send_key_to_fakecloud (DO_OPRF_H1, oprf_params.koprf, oprf_params.need_upload);
+		send_key_to_fakecloud (SERVER_IP, SERVER_PORT, oprf_params.koprf, oprf_params.need_upload);
 
 		// check if we need to upload
 		if (1 == atoi(oprf_params.need_upload)) {
@@ -393,3 +396,11 @@ static void parse_whisper_message (zyre_t *node, char *message)
 	}
 	return;
 }
+
+// static void get_ip_address (char *iface, char *out)
+// {
+// 	char cmd[1024] = {0};
+
+// 	sprintf (cmd, "ifconfig %s 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'", iface);
+// 	p_run_command (cmd, out);
+// }
