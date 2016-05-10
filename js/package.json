@@ -9,8 +9,8 @@
   "author": "jwhu1024@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "prompt": "~0.2.11",
     "bignum": "0.11.0",
-    "zmq": "2.15.1"
+    "busboy": "^0.2.13",
+    "express": "4.13.4"
   }
 }
