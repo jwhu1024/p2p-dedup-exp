@@ -32,9 +32,7 @@ http.createServer(function (req, res) {
 			headers: req.headers
 		});
 		busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
-			var saveTo = path.join(os.tmpDir() + "/uploads/" + filename);
-			console.log("Save the file to the path -> " + saveTo);
-			file.pipe(fs.createWriteStream(saveTo));
+			file.pipe(fs.createWriteStream(path.join(os.tmpDir() + "/uploads/" + filename)));
 		});
 		busboy.on('field', function (fieldname, val, fieldnameTruncated, valTruncated) {
 			var value = util.inspect(val);
