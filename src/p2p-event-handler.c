@@ -213,7 +213,7 @@ REPEAT:
 				}
 
 				if (strncmp (self_uuid, tmp_uuid, SP_PEER_UUID_LENGTH) == 0 		||
-					strncmp (sp_info.sp_peer, tmp_uuid, SP_PEER_UUID_LENGTH) == 0) 	{
+				        strncmp (sp_info.sp_peer, tmp_uuid, SP_PEER_UUID_LENGTH) == 0) 	{
 					if ((sz / 2) > rand_num)	rand_num++;
 					else					rand_num--;
 					goto REPEAT;
@@ -266,6 +266,14 @@ static void get_params (OPRF_S *params, char *command, char *message)
 		sscanf(message, "%*s %s %s %s", params->k1
 		       , params->filehash
 		       , params->dest_uuid);
+	} else if (strncmp (CMD_SEND_KOPRF, command, strlen (CMD_SEND_KOPRF)) == 0) {
+		sscanf(message, "%*s %s %s %s", params->koprf
+		       , params->filehash
+		       , params->dest_uuid);
+	} else if (strncmp (CMD_SEND_CFCK, command, strlen (CMD_SEND_CFCK)) == 0) {
+		sscanf(message, "%*s %s %s %s", params->CF
+		       , params->CK
+		       , params->filehash);
 	}
 
 	return;
@@ -417,7 +425,19 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		// calculate OPRF's value
 		do_oprf_with_js (DO_OPRF, oprf_params.k1, oprf_params.koprf);
 
-		// generate the private key
+		sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_KOPRF
+		         , oprf_params.koprf
+		         , oprf_params.filehash
+		         , zyre_uuid (node));
+
+		msg_to_send[strlen(msg_to_send)] = '\0';
+		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+		DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
+	}
+	/* KOPRF KOPRFVALUE FILEHASH OURUUID */
+	else if (strncmp (CMD_SEND_KOPRF, message, strlen (CMD_SEND_KOPRF)) == 0) {
+		get_params (&oprf_params, CMD_SEND_KOPRF, message);
+
 		if (priv_key[0] == '\0') {
 			generate_random_key (priv_key);
 		}
@@ -425,8 +445,20 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		gen_CFCK_with_js (DO_GEN_CF, priv_key, oprf_params.koprf, oprf_params.CF);
 		gen_CFCK_with_js (DO_GEN_CK, priv_key, oprf_params.filehash, oprf_params.CK);
 
+		sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_CFCK
+		         , oprf_params.CF
+		         , oprf_params.CK
+		         , oprf_params.filehash);
+
+		msg_to_send[strlen(msg_to_send)] = '\0';
+		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+	}
+	/* CFCK CF CK FILEHASH */
+	else if (strncmp (CMD_SEND_CFCK, message, strlen (CMD_SEND_CFCK)) == 0) {
+		get_params (&oprf_params, CMD_SEND_CFCK, message);
+
 		// check the key with server
-		send_key_to_fakecloud (SERVER_IP, SERVER_PORT, oprf_params.koprf, oprf_params.need_upload);
+		send_key_to_fakecloud (SERVER_IP, SERVER_PORT, oprf_params.CF, oprf_params.need_upload);
 
 		// check if we need to upload
 		if (1 == atoi(oprf_params.need_upload)) {
@@ -437,7 +469,6 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		}
 
 		DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
-		DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
 		DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
 		DBG ("\n\nCF: %s\n", oprf_params.CF);
 		DBG ("\n\nCK: %s\n", oprf_params.CK);

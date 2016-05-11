@@ -70,6 +70,16 @@ OPRFK1 K1 FILEHASH OURUUID
 */
 #define CMD_SEND_OPRF_K1	"OPRFK1"	/* Send K1 of OPRF to p1 		*/
 
+/*
+KOPRF KOPRFVALUE FILEHASH OURUUID
+*/
+#define CMD_SEND_KOPRF		"KOPRF"		/* Send KOPRF to pa 			*/
+
+/*
+CFCK CF CK FILEHASH
+*/
+#define CMD_SEND_CFCK		"CFCK"		/* Send CFCK to p1 			*/
+
 #define SH_FOUND			1
 #define SH_NOT_FOUND		0
 
