@@ -9,6 +9,14 @@ static char * const quads[] = { "0000", "0001", "0010", "0011",
                                 "1100", "1101", "1110", "1111",
                               };
 
+
+
+void generate_random_key (char *outkey)
+{
+	p_run_command ("openssl rand -base64 32", outkey);
+	return;
+}
+
 // create sha1 hash based on hash of sha256
 void create_sha1_hash (unsigned char *sha256_hash, unsigned char *outhash)
 {
@@ -85,13 +93,13 @@ void short_hash_calc (char *f, unsigned char short_hash[], unsigned char filehas
 	int i;
 	memset (short_hash, '\0', SHORT_HASH_LENGTH);
 
-	for (i = 0; i < (SHORT_HASH_LENGTH-1)/4; i++) {
+	for (i = 0; i < (SHORT_HASH_LENGTH - 1) / 4; i++) {
 		char *bstr = hex_to_bin_quad (filehash[i]);
 		if (bstr) {
 			strncat ((char *)short_hash, bstr, 4);
 		}
 	}
-	
+
 #ifdef __DEBUG__
 	// DBG ("filehash: %s\n", filehash);
 	// DBG ("sha1hash: %s\n", sha1hash);
@@ -119,7 +127,7 @@ void hash_test (void)
 
 	int i;
 	char short_hash[SHORT_HASH_LENGTH] = {0};
-	for (i = 0; i < SHORT_HASH_LENGTH/4; i++) {
+	for (i = 0; i < SHORT_HASH_LENGTH / 4; i++) {
 		char *bstr = hex_to_bin_quad (hash[i]);
 		if (bstr) {
 			strncat (short_hash, bstr, 4);

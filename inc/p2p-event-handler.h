@@ -27,6 +27,8 @@ typedef struct oprf_info {
 	char filehash[SHA256_HASH_LENGTH];
 	char dest_uuid[SP_PEER_UUID_LENGTH];
 	char need_upload[8];
+	char CF[1024];
+	char CK[256];
 } OPRF_S;
 
 int process_event_msg (zmsg_t *msg, req_info_t *info);

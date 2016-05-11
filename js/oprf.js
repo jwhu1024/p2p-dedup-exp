@@ -1,6 +1,6 @@
-var fs 		= require('fs'),
-	bignum 	= require("bignum"),
-	crypto 	= require("crypto");
+var fs = require('fs'),
+	bignum = require("bignum"),
+	crypto = require("crypto");
 
 function do_oprf_h1(_fileHash) {
 	var fileHash = _fileHash;
@@ -31,9 +31,9 @@ function do_oprf_k1(_h1) {
 }
 
 function do_oprf(_k1) {
-	fs.readFile("/tmp/n", "utf-8", function (err, data_n) {
+	fs.readFile("/tmp/n", "utf-8", function(err, data_n) {
 		var n1 = bignum(data_n);
-		fs.readFile("/tmp/r", "utf-8", function (err, data_r) {
+		fs.readFile("/tmp/r", "utf-8", function(err, data_r) {
 			var r1 = bignum(data_r);
 			var k1 = bignum(_k1, 10);
 			var x1 = bignum.invertm(r1, n1);
@@ -45,10 +45,12 @@ function do_oprf(_k1) {
 	});
 }
 
-function do_gen_CF_key (_f1) {
-	var fileCipher = crypto.createCipher(CIPHER_ALGO, fileKey);
-	console.log (fileCipher);
-}  
+function do_gen_CF_CK_key(password, target) {
+	var cipher = crypto.createCipher("aes128", password)
+	var crypted = cipher.update(target, 'utf8', 'hex')
+	crypted += cipher.final('hex');
+	console.log(crypted);
+}
 
 var args = process.argv.slice(2);
 var cmd = args[0];
@@ -64,7 +66,8 @@ switch (args[0]) {
 		do_oprf(args[1]);
 		break;
 	case "4":
-		do_gen_CF_key(args[1]);
+	case "5":
+		do_gen_CF_CK_key(args[1], args[2]);
 		break;
 	default:
 		console.log('default');

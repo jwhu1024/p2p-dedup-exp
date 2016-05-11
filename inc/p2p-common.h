@@ -90,7 +90,9 @@ typedef struct {
 typedef enum {
 	DO_OPRF_H1 = 1,
 	DO_OPRF_K1,
-	DO_OPRF
+	DO_OPRF,
+	DO_GEN_CF,
+	DO_GEN_CK
 } JS_CMD_E;
 
 typedef enum {

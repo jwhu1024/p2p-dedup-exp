@@ -4,6 +4,7 @@
 
 #include "p2p-cmd-handler.h"
 #include "p2p-event-handler.h"
+#include "p2p-encrypt.h"
 #include "p2p-common.h"
 #include "p2p-list.h"
 
@@ -11,6 +12,7 @@ extern sp_info_t sp_info;
 extern const char *HEADER_VALUE;
 extern const char *P2P_GROUP_NAME;
 extern char g_filename[PATH_MAX];
+static char priv_key[45] = {0};
 
 struct sh_tbl *sh_table = NULL;
 
@@ -201,11 +203,15 @@ REPEAT:
 	rand_num = rand() % sz;
 
 	if (sz > 0) {
-		peers = 0;
 		while (zlist_next(plist) != NULL) {
 			char *tmp_uuid = (char *) zlist_pop (plist);
 
 			if (peers == rand_num) {
+				if (sz == 1) {
+					memcpy(p, sp_info.sp_peer, SP_PEER_UUID_LENGTH);
+					return 1;
+				}
+
 				if (strncmp (self_uuid, tmp_uuid, SP_PEER_UUID_LENGTH) == 0 		||
 					strncmp (sp_info.sp_peer, tmp_uuid, SP_PEER_UUID_LENGTH) == 0) 	{
 					if ((sz / 2) > rand_num)	rand_num++;
@@ -265,12 +271,22 @@ static void get_params (OPRF_S *params, char *command, char *message)
 	return;
 }
 
-static void send_key_to_fakecloud (char *ser_ip, int ser_port, char *key, char *out)
+static void gen_CFCK_with_js (JS_CMD_E jscmd, char *password, char *target, char *out)
+{
+	char cmd[1024] = {0};
+
+	sprintf (cmd, "node ../js/oprf.js %d %s %s", (int) jscmd, password, target);
+	p_run_command (cmd, out);
+	return;
+}
+
+static void send_key_to_fakecloud (char *ser_ip, int ser_port, char *CK, char *out)
 {
 	char cmd[1024] = {0};
 
 	_system ("rm -f /tmp/need_upload");
-	_system ("http -b -f POST %s:%d key=%s > /tmp/need_upload && echo "" >> /tmp/need_upload", ser_ip, ser_port, key);
+	sprintf (cmd, "http -b -f POST %s:%d key=\"%s\" > /tmp/need_upload && echo "" >> /tmp/need_upload", ser_ip, ser_port, CK);
+	_system (cmd);
 
 	sprintf (cmd, "cat /tmp/need_upload");
 	p_run_command (cmd, out);
@@ -331,7 +347,7 @@ static void parse_whisper_message (zyre_t *node, char *message)
 				         , ptr->uuid
 				         , oprf_params.filehash);
 			} else {
-				list_delete_by_shorthash (oprf_params.shorthash);
+				// list_delete_by_shorthash (oprf_params.shorthash);
 				DBG ("%speer offline: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
 				sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP
 				         , SH_NOT_FOUND
@@ -396,11 +412,18 @@ static void parse_whisper_message (zyre_t *node, char *message)
 	}
 	/* OPRFK1 K1 FILEHASH UUID */
 	else if (strncmp (CMD_SEND_OPRF_K1, message, strlen (CMD_SEND_OPRF_K1)) == 0) {
-		/* OPRFH1/OPRFK1 H1/K1 FILEHASH UUID */
 		get_params (&oprf_params, CMD_SEND_OPRF_K1, message);
 
 		// calculate OPRF's value
 		do_oprf_with_js (DO_OPRF, oprf_params.k1, oprf_params.koprf);
+
+		// generate the private key
+		if (priv_key[0] == '\0') {
+			generate_random_key (priv_key);
+		}
+
+		gen_CFCK_with_js (DO_GEN_CF, priv_key, oprf_params.koprf, oprf_params.CF);
+		gen_CFCK_with_js (DO_GEN_CK, priv_key, oprf_params.filehash, oprf_params.CK);
 
 		// check the key with server
 		send_key_to_fakecloud (SERVER_IP, SERVER_PORT, oprf_params.koprf, oprf_params.need_upload);
@@ -413,9 +436,11 @@ static void parse_whisper_message (zyre_t *node, char *message)
 			// we don't need to upload the same file to server again
 		}
 
-		// DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
-		// DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
-		// DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
+		DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
+		DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
+		DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
+		DBG ("\n\nCF: %s\n", oprf_params.CF);
+		DBG ("\n\nCK: %s\n", oprf_params.CK);
 	}
 	return;
 }

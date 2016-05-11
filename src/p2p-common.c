@@ -29,9 +29,9 @@ int _system (const char *fmt, ...)
 {
 	va_list args;
 	int i;
-	char buf[512];
+	char buf[1024];
 
-	memset(buf, 0x0, 512);
+	memset(buf, 0x0, 1024);
 	va_start(args, fmt);
 	i = vsprintf(buf, fmt, args);
 	va_end(args);
