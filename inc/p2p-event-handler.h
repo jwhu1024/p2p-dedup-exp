@@ -17,6 +17,11 @@ typedef struct zyre_cmd_table {
 	int (*EV_HANDLER) (req_info_t *info);
 } zyre_cmd_table_t;
 
+typedef struct whisper_handler {
+	char event[16];
+	void (*WHISPER_HANDLER) (zyre_t *node, char *message);
+} whisper_handler_t;
+
 typedef struct oprf_info {
 	char command[10];
 	int sh_is_found;

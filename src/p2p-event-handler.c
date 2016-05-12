@@ -15,6 +15,7 @@ extern char g_filename[PATH_MAX];
 static char priv_key[45] = {0};
 
 struct sh_tbl *sh_table = NULL;
+OPRF_S oprf_params;
 
 int event_enter_handler 	(req_info_t *info);
 int event_evasive_handler 	(req_info_t *info);
@@ -33,6 +34,25 @@ zyre_cmd_table_t zyre_op_func_tbl[] = {
 	{	"WHISPER",		event_whisper_handler 	},
 	{	"SHOUT",		event_shout_handler 	},
 	{	"",				NULL 					}
+};
+
+static void cmd_ssu_op_func 			(zyre_t *node, char *message);
+static void cmd_ssu_rsp_op_func 		(zyre_t *node, char *message);
+static void cmd_sprec_op_func 			(zyre_t *node, char *message);
+static void cmd_send_oprf_h1_op_func	(zyre_t *node, char *message);
+static void cmd_send_oprf_k1_op_func 	(zyre_t *node, char *message);
+static void cmd_send_koprf_op_func 		(zyre_t *node, char *message);
+static void cmd_send_cfck_op_func 		(zyre_t *node, char *message);
+
+whisper_handler_t zyre_whisper_op_func_tbl[] = 	{
+	{	CMD_SSU,			cmd_ssu_op_func 			},
+	{	CMD_SSU_RSP,		cmd_ssu_rsp_op_func 		},
+	{	CMD_SP_REC,			cmd_sprec_op_func 			},
+	{	CMD_SEND_OPRF_H1,	cmd_send_oprf_h1_op_func 	},
+	{	CMD_SEND_OPRF_K1,	cmd_send_oprf_k1_op_func 	},
+	{	CMD_SEND_KOPRF,		cmd_send_koprf_op_func 		},
+	{	CMD_SEND_CFCK,		cmd_send_cfck_op_func 		},
+	{	"",					NULL						}
 };
 
 void free_mem (req_info_t *info)
@@ -307,171 +327,202 @@ static void upload_file_to_fakecloud (char *ser_ip, int ser_port)
 	return;
 }
 
+static void cmd_ssu_op_func (zyre_t *node, char *message)
+{
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+	bool in_list = false;
+	bool is_dup = false;
+
+	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	get_params (&oprf_params, CMD_SSU, message);
+
+	struct sh_tbl *ptr = list_search_by_shorthash (oprf_params.shorthash, NULL);
+	if (NULL == ptr) {
+		DBG ("%sSearch [sh = %s] failed, no such element found%s\n", YELLOW, oprf_params.shorthash, RESET);
+	} else {
+		if (strncmp (ptr->uuid, oprf_params.dest_uuid, SP_PEER_UUID_LENGTH) != 0) {
+			DBG ("%sSearch passed [shorthash = %s, uuid = %s]%s\n", YELLOW, oprf_params.shorthash, ptr->uuid, RESET);
+		} else {
+			DBG ("Discard this dedup if the pa is ourself\n");
+			is_dup = true;
+		}
+		in_list = true;
+	}
+
+	if (node) {
+		int peer_is_online = -1;
+
+		if (in_list == true && is_dup == false) {
+			peer_is_online = is_peer_online (node, ptr->uuid);
+		}
+
+		DBG ("%sin_list: %s, peer_is_online: %d%s\n" , LIGHT_BLUE
+		     , (in_list == true) ? "true" : "false"
+		     , peer_is_online
+		     , RESET);
+
+		if (in_list == true && peer_is_online == 1) {
+			DBG ("%speer online: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
+			sprintf (msg_to_send, "%s %d %s %s %s", CMD_SSU_RSP
+			         , SH_FOUND
+			         , oprf_params.shorthash
+			         , ptr->uuid
+			         , oprf_params.filehash);
+		} else {
+			// list_delete_by_shorthash (oprf_params.shorthash);
+			DBG ("%speer offline: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
+			sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP
+			         , SH_NOT_FOUND
+			         , oprf_params.shorthash
+			         , oprf_params.filehash);
+		}
+
+		oprf_params.dest_uuid[SP_PEER_UUID_LENGTH] = '\0';
+		msg_to_send[strlen(msg_to_send)] = '\0';
+		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+	} else {
+		DBG ("node is not available\n");
+	}
+	return;
+}
+
+static void cmd_ssu_rsp_op_func (zyre_t *node, char *message)
+{
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+
+	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	get_params (&oprf_params, CMD_SSU_RSP, message);
+
+	if (oprf_params.sh_is_found == 0) {
+		random_select_peer (node , oprf_params.dest_uuid);
+	}
+
+	sprintf (msg_to_send, "%s %s %s", CMD_SP_REC
+	         , oprf_params.shorthash
+	         , oprf_params.dest_uuid);
+
+	msg_to_send[strlen(msg_to_send)] = '\0';
+	send_whisper_msg (node, msg_to_send, sp_info.sp_peer);
+
+	// calculate h1
+	do_oprf_with_js (DO_OPRF_H1, oprf_params.filehash, oprf_params.h1);
+
+	memset (msg_to_send, '\0', sizeof(msg_to_send));
+	sprintf (msg_to_send, "%s %s %s %s", CMD_SEND_OPRF_H1
+	         , oprf_params.h1
+	         , oprf_params.filehash
+	         , zyre_uuid (node));
+
+	msg_to_send[strlen(msg_to_send)] = '\0';
+	send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+}
+
+static void cmd_sprec_op_func (zyre_t *node, char *message)
+{
+	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	get_params (&oprf_params, CMD_SP_REC, message);
+	store_conn_history (oprf_params.shorthash, oprf_params.dest_uuid);
+}
+
+static void cmd_send_oprf_h1_op_func (zyre_t *node, char *message)
+{
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+
+	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	get_params (&oprf_params, CMD_SEND_OPRF_H1, message);
+
+	// calculate k1
+	do_oprf_with_js (DO_OPRF_K1, oprf_params.h1, oprf_params.k1);
+
+	sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_OPRF_K1
+	         , oprf_params.k1
+	         , oprf_params.filehash
+	         , zyre_uuid (node));
+
+	msg_to_send[strlen(msg_to_send)] = '\0';
+	send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+}
+
+static void cmd_send_oprf_k1_op_func (zyre_t *node, char *message)
+{
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+
+	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	get_params (&oprf_params, CMD_SEND_OPRF_K1, message);
+
+	// calculate OPRF's value
+	do_oprf_with_js (DO_OPRF, oprf_params.k1, oprf_params.koprf);
+
+	sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_KOPRF
+	         , oprf_params.koprf
+	         , oprf_params.filehash
+	         , zyre_uuid (node));
+
+	msg_to_send[strlen(msg_to_send)] = '\0';
+	send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+	DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
+}
+
+static void cmd_send_koprf_op_func (zyre_t *node, char *message)
+{
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+
+	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	get_params (&oprf_params, CMD_SEND_KOPRF, message);
+
+	if (priv_key[0] == '\0') {
+		generate_random_key (priv_key);
+	}
+
+	gen_CFCK_with_js (DO_GEN_CF, priv_key, oprf_params.koprf, oprf_params.CF);
+	gen_CFCK_with_js (DO_GEN_CK, priv_key, oprf_params.filehash, oprf_params.CK);
+
+	sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_CFCK
+	         , oprf_params.CF
+	         , oprf_params.CK
+	         , oprf_params.filehash);
+
+	msg_to_send[strlen(msg_to_send)] = '\0';
+	send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+}
+
+static void cmd_send_cfck_op_func (zyre_t *node, char *message)
+{
+	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	get_params (&oprf_params, CMD_SEND_CFCK, message);
+
+	// check the key with server
+	send_key_to_fakecloud (SERVER_IP, SERVER_PORT, oprf_params.CF, oprf_params.need_upload);
+
+	// check if we need to upload
+	if (1 == atoi(oprf_params.need_upload)) {
+		DBG ("Ready to upload file to server...\n");
+		upload_file_to_fakecloud (SERVER_IP, SERVER_PORT);
+	} else {
+		// we don't need to upload the same file to server again
+	}
+
+	DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
+	DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
+	DBG ("\n\nCF: %s\n", oprf_params.CF);
+	DBG ("\n\nCK: %s\n", oprf_params.CK);
+}
+
 static void parse_whisper_message (zyre_t *node, char *message)
 {
 	DBG ("\n%s=== Received - %s ===%s\n", LIGHT_PURPLE, message, RESET);
 
-	char msg_to_send[MSG_TRANS_LENGTH] = {0};
-	OPRF_S oprf_params;
-	memset (&oprf_params, '\0', sizeof (OPRF_S));
+	char command[16] = {0};
+	sscanf (message, "%s", command);
 
-	/*  SSU SHORTHASH FILEHASH UUID */
-	if (strncmp (CMD_SSU, message, strlen (CMD_SSU)) == 0) {
-		bool in_list = false;
-		bool is_dup = false;
-
-		get_params (&oprf_params, CMD_SSU, message);
-
-		struct sh_tbl *ptr = list_search_by_shorthash (oprf_params.shorthash, NULL);
-		if (NULL == ptr) {
-			DBG ("%sSearch [sh = %s] failed, no such element found%s\n", YELLOW, oprf_params.shorthash, RESET);
-		} else {
-			if (strncmp (ptr->uuid, oprf_params.dest_uuid, SP_PEER_UUID_LENGTH) != 0) {
-				DBG ("%sSearch passed [shorthash = %s, uuid = %s]%s\n", YELLOW, oprf_params.shorthash, ptr->uuid, RESET);
-			} else {
-				DBG ("Discard this dedup if the pa is ourself\n");
-				is_dup = true;
-			}
-			in_list = true;
+	whisper_handler_t *wh = zyre_whisper_op_func_tbl;
+	while (wh->event[0] != '\0') {
+		if (streq (wh->event, command)) {
+			wh->WHISPER_HANDLER(node, message);
+			break;
 		}
-
-		if (node) {
-			int peer_is_online = -1;
-
-			if (in_list == true && is_dup == false) {
-				peer_is_online = is_peer_online (node, ptr->uuid);
-			}
-
-			DBG ("%sin_list: %s, peer_is_online: %d%s\n" , LIGHT_BLUE
-			     , (in_list == true) ? "true" : "false"
-			     , peer_is_online
-			     , RESET);
-
-			if (in_list == true && peer_is_online == 1) {
-				DBG ("%speer online: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
-				sprintf (msg_to_send, "%s %d %s %s %s", CMD_SSU_RSP
-				         , SH_FOUND
-				         , oprf_params.shorthash
-				         , ptr->uuid
-				         , oprf_params.filehash);
-			} else {
-				// list_delete_by_shorthash (oprf_params.shorthash);
-				DBG ("%speer offline: %s%s\n", LIGHT_BLUE, ptr->uuid, RESET);
-				sprintf (msg_to_send, "%s %d %s %s", CMD_SSU_RSP
-				         , SH_NOT_FOUND
-				         , oprf_params.shorthash
-				         , oprf_params.filehash);
-			}
-
-			oprf_params.dest_uuid[SP_PEER_UUID_LENGTH] = '\0';
-			msg_to_send[strlen(msg_to_send)] = '\0';
-			send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
-		} else {
-			DBG ("node is not available\n");
-		}
+		wh++;
 	}
-	/*  RSPSSU SHFOUND SHORTHASH UUID FILEHASH
-		RSPSSU SHNOTFOUND SHORTHASH FILEHASH 	*/
-	else if (strncmp (CMD_SSU_RSP, message, strlen (CMD_SSU_RSP)) == 0) {
-		get_params (&oprf_params, CMD_SSU_RSP, message);
-
-		if (oprf_params.sh_is_found == 0) {
-			random_select_peer (node , oprf_params.dest_uuid);
-		}
-
-		sprintf (msg_to_send, "%s %s %s", CMD_SP_REC
-		         , oprf_params.shorthash
-		         , oprf_params.dest_uuid);
-
-		msg_to_send[strlen(msg_to_send)] = '\0';
-		send_whisper_msg (node, msg_to_send, sp_info.sp_peer);
-
-		// calculate h1
-		do_oprf_with_js (DO_OPRF_H1, oprf_params.filehash, oprf_params.h1);
-
-		memset (msg_to_send, '\0', sizeof(msg_to_send));
-		sprintf (msg_to_send, "%s %s %s %s", CMD_SEND_OPRF_H1
-		         , oprf_params.h1
-		         , oprf_params.filehash
-		         , zyre_uuid (node));
-
-		msg_to_send[strlen(msg_to_send)] = '\0';
-		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
-	}
-	/*  SPREC SHORTHASH UUID */
-	else if (strncmp (CMD_SP_REC, message, strlen (CMD_SP_REC)) == 0) {
-		get_params (&oprf_params, CMD_SP_REC, message);
-		store_conn_history (oprf_params.shorthash, oprf_params.dest_uuid);
-	}
-	/* OPRFH1 H1 FILEHASH UUID */
-	else if (strncmp (CMD_SEND_OPRF_H1, message, strlen (CMD_SEND_OPRF_H1)) == 0) {
-		get_params (&oprf_params, CMD_SEND_OPRF_H1, message);
-
-		// calculate k1
-		do_oprf_with_js (DO_OPRF_K1, oprf_params.h1, oprf_params.k1);
-
-		sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_OPRF_K1
-		         , oprf_params.k1
-		         , oprf_params.filehash
-		         , zyre_uuid (node));
-
-		msg_to_send[strlen(msg_to_send)] = '\0';
-		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
-	}
-	/* OPRFK1 K1 FILEHASH UUID */
-	else if (strncmp (CMD_SEND_OPRF_K1, message, strlen (CMD_SEND_OPRF_K1)) == 0) {
-		get_params (&oprf_params, CMD_SEND_OPRF_K1, message);
-
-		// calculate OPRF's value
-		do_oprf_with_js (DO_OPRF, oprf_params.k1, oprf_params.koprf);
-
-		sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_KOPRF
-		         , oprf_params.koprf
-		         , oprf_params.filehash
-		         , zyre_uuid (node));
-
-		msg_to_send[strlen(msg_to_send)] = '\0';
-		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
-		DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
-	}
-	/* KOPRF KOPRFVALUE FILEHASH OURUUID */
-	else if (strncmp (CMD_SEND_KOPRF, message, strlen (CMD_SEND_KOPRF)) == 0) {
-		get_params (&oprf_params, CMD_SEND_KOPRF, message);
-
-		if (priv_key[0] == '\0') {
-			generate_random_key (priv_key);
-		}
-
-		gen_CFCK_with_js (DO_GEN_CF, priv_key, oprf_params.koprf, oprf_params.CF);
-		gen_CFCK_with_js (DO_GEN_CK, priv_key, oprf_params.filehash, oprf_params.CK);
-
-		sprintf (msg_to_send, "%s %s %s %s"	, CMD_SEND_CFCK
-		         , oprf_params.CF
-		         , oprf_params.CK
-		         , oprf_params.filehash);
-
-		msg_to_send[strlen(msg_to_send)] = '\0';
-		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
-	}
-	/* CFCK CF CK FILEHASH */
-	else if (strncmp (CMD_SEND_CFCK, message, strlen (CMD_SEND_CFCK)) == 0) {
-		get_params (&oprf_params, CMD_SEND_CFCK, message);
-
-		// check the key with server
-		send_key_to_fakecloud (SERVER_IP, SERVER_PORT, oprf_params.CF, oprf_params.need_upload);
-
-		// check if we need to upload
-		if (1 == atoi(oprf_params.need_upload)) {
-			DBG ("Ready to upload file to server...\n");
-			upload_file_to_fakecloud (SERVER_IP, SERVER_PORT);
-		} else {
-			// we don't need to upload the same file to server again
-		}
-
-		DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
-		DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
-		DBG ("\n\nCF: %s\n", oprf_params.CF);
-		DBG ("\n\nCK: %s\n", oprf_params.CK);
-	}
+	
 	return;
 }
