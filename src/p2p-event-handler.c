@@ -466,7 +466,7 @@ static void cmd_send_oprf_k1_op_func (zyre_t *node, char *message)
 
 	msg_to_send[strlen(msg_to_send)] = '\0';
 	send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
-	DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
+	// DBG ("\n\nkoprf: %s\n", oprf_params.koprf);
 }
 
 static void cmd_send_koprf_op_func (zyre_t *node, char *message)
@@ -505,13 +505,13 @@ static void cmd_send_cfck_op_func (zyre_t *node, char *message)
 		DBG ("Ready to upload file to server...\n");
 		upload_file_to_fakecloud (SERVER_IP, SERVER_PORT);
 	} else {
-		// we don't need to upload the same file to server again
+		DBG ("Don't need to upload the same file to server again...\n");
 	}
 
-	DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
-	DBG ("\n\nneed_upload: %s\n", oprf_params.need_upload);
-	DBG ("\n\nCF: %s\n", oprf_params.CF);
-	DBG ("\n\nCK: %s\n", oprf_params.CK);
+	// DBG ("\n\nfilehash: %s\n", oprf_params.filehash);
+	// DBG ("\n\nCF: %s\n", oprf_params.CF);
+	// DBG ("\n\nCK: %s\n", oprf_params.CK);
+	DBG ("%sneed_upload: %s%s\n", LIGHT_RED, oprf_params.need_upload, RESET);
 }
 
 static void cmd_list_forward_begin_op_func (zyre_t *node, char *message)
@@ -538,7 +538,7 @@ static void cmd_list_forward_end_op_func (zyre_t *node, char *message)
 
 static void parse_whisper_message (zyre_t *node, char *message)
 {
-	DBG ("\n%s=== Received - %s ===%s\n", LIGHT_PURPLE, message, RESET);
+	// DBG ("\n%s=== Received - %s ===%s\n", LIGHT_GREEN, message, RESET);
 
 	char command[16] = {0};
 	sscanf (message, "%s", command);

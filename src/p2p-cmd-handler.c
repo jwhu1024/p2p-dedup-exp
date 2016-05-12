@@ -176,7 +176,7 @@ void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)
 	process_whisper (node, lmsg);
 	zmsg_destroy 	(&lmsg);
 
-	DBG ("\n%s=== Send \"%s\" to %s ===%s\n", LIGHT_PURPLE, msg, dest_peer, RESET);
+	// DBG ("\n%s=== Send \"%s\" to %s ===%s\n", PURPLE, msg, dest_peer, RESET);
 	return;
 }
 
