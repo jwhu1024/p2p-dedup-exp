@@ -185,34 +185,19 @@ int list_count ()
 	return num;
 }
 
-// char *list_get_ip_by_index (int idx)
-// {
-// 	int num = 0;
-// 	struct sh_tbl *ptr = head;
+struct sh_tbl *list_get_by_index (int idx)
+{
+	int num = 0;
+	struct sh_tbl *ptr = head;
 
-// 	while (ptr != NULL) {
-// 		if (idx == num++) {
-// 			return ptr->ipaddr;
-// 		}
-// 		ptr = ptr->next;
-// 	}
-// 	return NULL;
-// }
-
-// void list_check_timestamp (time_t cur_time, int threshold)
-// {
-// 	struct sh_tbl *ptr = head;
-
-// 	while (ptr != NULL) {
-// 		time_t diff = cur_time - ptr->ts;
-// 		if (diff >= threshold) {
-// 			DBG ("%s%s LEAVE%s\n", YELLOW, ptr->ipaddr, RESET);
-// 			list_delete_by_shorthash(ptr->ipaddr);
-// 		}
-// 		ptr = ptr->next;
-// 	}
-// 	return;
-// }
+	while (ptr != NULL) {
+		if (idx == num++) {
+			return ptr;
+		}
+		ptr = ptr->next;
+	}
+	return NULL;
+}
 
 #if 0 //def __DEBUG__
 

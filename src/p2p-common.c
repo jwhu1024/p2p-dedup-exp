@@ -13,6 +13,11 @@ int is_file_exist (const char *path)
 		return 0;
 }
 
+void kill_program (int pid)
+{
+    kill(pid, SIGINT);
+}
+
 void print_command_list (void)
 {
 	printf("-----------------------------------------\n");
@@ -22,6 +27,7 @@ void print_command_list (void)
 	printf("[3]\t\tQUERY\t\tQuery Current Online Peers\n");
 	printf("[4]\t\tSETSP\t\tSet Current Node as SuperPeer\n");
 	printf("[5]\t\tSTART\t\tStart Test Process\n");
+	printf("[6]\t\tEXIT\t\tForward The List Then Terminate the program\n");
 	printf("-----------------------------------------\n");
 }
 

@@ -17,5 +17,6 @@ typedef struct user_cmd_table {
 
 void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer);
 void send_shout_msg (zyre_t *node, char *msg);
+void force_set_sp_self (zyre_t *node);
 
 #endif /* _P2P_CMD_HANDLER_H_ */

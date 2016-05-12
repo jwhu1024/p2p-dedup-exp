@@ -19,6 +19,6 @@ int list_count (void);
 void list_free (void);
 void list_display (void);
 void list_check_timestamp (time_t cur_time, int threshold);
-char *list_get_ip_by_index(int);
+struct sh_tbl *list_get_by_index (int idx);
 
 #endif /* _P2P_LIST_H_ */

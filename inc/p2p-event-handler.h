@@ -37,5 +37,6 @@ typedef struct oprf_info {
 } OPRF_S;
 
 int process_event_msg (zmsg_t *msg, req_info_t *info);
+void forward_list_to_next_sp (zyre_t *node);
 
 #endif /* _P2P_HANDLER_H_ */

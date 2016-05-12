@@ -36,23 +36,29 @@ zyre_cmd_table_t zyre_op_func_tbl[] = {
 	{	"",				NULL 					}
 };
 
-static void cmd_ssu_op_func 			(zyre_t *node, char *message);
-static void cmd_ssu_rsp_op_func 		(zyre_t *node, char *message);
-static void cmd_sprec_op_func 			(zyre_t *node, char *message);
-static void cmd_send_oprf_h1_op_func	(zyre_t *node, char *message);
-static void cmd_send_oprf_k1_op_func 	(zyre_t *node, char *message);
-static void cmd_send_koprf_op_func 		(zyre_t *node, char *message);
-static void cmd_send_cfck_op_func 		(zyre_t *node, char *message);
+static void cmd_ssu_op_func 				(zyre_t *node, char *message);
+static void cmd_ssu_rsp_op_func 			(zyre_t *node, char *message);
+static void cmd_sprec_op_func 				(zyre_t *node, char *message);
+static void cmd_send_oprf_h1_op_func		(zyre_t *node, char *message);
+static void cmd_send_oprf_k1_op_func 		(zyre_t *node, char *message);
+static void cmd_send_koprf_op_func 			(zyre_t *node, char *message);
+static void cmd_send_cfck_op_func 			(zyre_t *node, char *message);
+static void cmd_list_forward_begin_op_func 	(zyre_t *node, char *message);
+static void cmd_list_forward_op_func 		(zyre_t *node, char *message);
+static void cmd_list_forward_end_op_func 	(zyre_t *node, char *message);
 
 whisper_handler_t zyre_whisper_op_func_tbl[] = 	{
-	{	CMD_SSU,			cmd_ssu_op_func 			},
-	{	CMD_SSU_RSP,		cmd_ssu_rsp_op_func 		},
-	{	CMD_SP_REC,			cmd_sprec_op_func 			},
-	{	CMD_SEND_OPRF_H1,	cmd_send_oprf_h1_op_func 	},
-	{	CMD_SEND_OPRF_K1,	cmd_send_oprf_k1_op_func 	},
-	{	CMD_SEND_KOPRF,		cmd_send_koprf_op_func 		},
-	{	CMD_SEND_CFCK,		cmd_send_cfck_op_func 		},
-	{	"",					NULL						}
+	{	CMD_SSU,			cmd_ssu_op_func 				},
+	{	CMD_SSU_RSP,		cmd_ssu_rsp_op_func 			},
+	{	CMD_SP_REC,			cmd_sprec_op_func 				},
+	{	CMD_SEND_OPRF_H1,	cmd_send_oprf_h1_op_func 		},
+	{	CMD_SEND_OPRF_K1,	cmd_send_oprf_k1_op_func 		},
+	{	CMD_SEND_KOPRF,		cmd_send_koprf_op_func 			},
+	{	CMD_SEND_CFCK,		cmd_send_cfck_op_func 			},
+	{	CMD_LFWB,			cmd_list_forward_begin_op_func 	},
+	{	CMD_LFW,			cmd_list_forward_op_func 		},
+	{	CMD_LFWE,			cmd_list_forward_end_op_func 	},
+	{	"",					NULL							}
 };
 
 void free_mem (req_info_t *info)
@@ -508,6 +514,28 @@ static void cmd_send_cfck_op_func (zyre_t *node, char *message)
 	DBG ("\n\nCK: %s\n", oprf_params.CK);
 }
 
+static void cmd_list_forward_begin_op_func (zyre_t *node, char *message)
+{
+	// list_display (); // debug only
+	return;
+}
+
+static void cmd_list_forward_op_func (zyre_t *node, char *message)
+{
+	struct sh_tbl stb;
+	memset(&stb, 0, sizeof(struct sh_tbl));
+	sscanf(message, "%*s %s %s", stb.uuid, stb.short_hash);
+	list_add(&stb, true);
+	return;
+}
+
+static void cmd_list_forward_end_op_func (zyre_t *node, char *message)
+{
+	list_display ();  // debug only
+	force_set_sp_self (node);
+	return;
+}
+
 static void parse_whisper_message (zyre_t *node, char *message)
 {
 	DBG ("\n%s=== Received - %s ===%s\n", LIGHT_PURPLE, message, RESET);
@@ -523,6 +551,42 @@ static void parse_whisper_message (zyre_t *node, char *message)
 		}
 		wh++;
 	}
-	
+
+	return;
+}
+
+void forward_list_to_next_sp (zyre_t *node)
+{
+	int n = 0;
+	struct sh_tbl *s;
+
+	list_display ();
+	char msg_to_send[MSG_TRANS_LENGTH] = {0};
+
+	strcpy (msg_to_send, CMD_LFWB);
+	msg_to_send[strlen(msg_to_send)] = '\0';
+	send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+
+	if (list_count() > 0) {
+		while ((s = list_get_by_index(n)) != NULL) {
+			memset (msg_to_send, '\0', sizeof (msg_to_send));
+			sprintf (msg_to_send, "%s %s %s", CMD_LFW
+			         , s->uuid
+			         , s->short_hash);
+
+			msg_to_send[strlen(msg_to_send)] = '\0';
+			send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+
+			n++;
+			zclock_sleep (300);		// wait for a while between two commands
+		}
+
+		memset (msg_to_send, '\0', sizeof (msg_to_send));
+		strcpy (msg_to_send, CMD_LFWE);
+		msg_to_send[strlen(msg_to_send)] = '\0';
+		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
+	}
+
+	zclock_sleep (n*500);			// wait for above commands all arrived
 	return;
 }

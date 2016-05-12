@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "p2p-cmd-handler.h"
+#include "p2p-event-handler.h"
 #include "p2p-encrypt.h"
 #include "p2p-common.h"
 
@@ -8,9 +9,11 @@ extern const char *HEADER_VALUE;
 extern const char *P2P_GROUP_NAME;
 extern sp_info_t sp_info;
 extern struct sh_tbl *sh_table;
+extern bool terminated;
+extern pid_t g_pid;
 
+static int force_set_sp = false;
 char g_filename[PATH_MAX];
-
 bool terminated = false;
 
 static int process_terminate 	(zyre_t *node, zmsg_t *msg);
@@ -19,6 +22,7 @@ static int process_whisper 		(zyre_t *node, zmsg_t *msg);
 static int query_online_peers 	(zyre_t *node, zmsg_t *msg);
 static int process_set_sp 		(zyre_t *node, zmsg_t *msg);
 static int process_start 		(zyre_t *node, zmsg_t *msg);
+static int process_exit 		(zyre_t *node, zmsg_t *msg);
 
 user_cmd_table_t user_op_func_tbl[] = {
 	{	"$TERM",		process_terminate 	},
@@ -27,6 +31,7 @@ user_cmd_table_t user_op_func_tbl[] = {
 	{	"QUERY",		query_online_peers 	},
 	{	"SETSP",		process_set_sp	 	},
 	{	"START",		process_start	 	},
+	{	"EXIT",			process_exit	 	},
 	{	"",				NULL	 			}
 };
 
@@ -93,7 +98,7 @@ static int process_set_sp (zyre_t *node, zmsg_t *msg)
 	   other peers will receive this header when join
 	   the same group.
 	*/
-	if (sp_p->sp_peer[0] == '\0' && sp_p->own == 0) {
+	if ((sp_p->sp_peer[0] == '\0' && sp_p->own == 0) || force_set_sp == true) {
 		zyre_set_header (node, "X-HEADER", HEADER_VALUE);
 		DBG ("Set headers as %s\n", HEADER_VALUE);
 
@@ -116,7 +121,7 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 
 	memset (g_filename, '\0', PATH_MAX);
 	strncpy (g_filename, fn, strlen (fn));
-	
+
 	if (is_file_exist(g_filename) == 0) {
 		DBG ("%s===== File NOT exist return zero %s =====%s\n", LIGHT_PURPLE, g_filename, RESET);
 		return 0;
@@ -154,6 +159,14 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 	return 1;
 }
 
+static int process_exit (zyre_t *node, zmsg_t *msg)
+{
+	forward_list_to_next_sp (node);
+	kill_program ((int) g_pid);
+	terminated = true;
+	return 1;
+}
+
 /* helper functions */
 void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)
 {
@@ -175,5 +188,13 @@ void send_shout_msg (zyre_t *node, char *msg)
 	zmsg_destroy 	(&lmsg);
 
 	DBG ("%s=== Send \"%s\" to all peers ===%s\n", LIGHT_PURPLE, msg, RESET);
+	return;
+}
+
+void force_set_sp_self (zyre_t *node)
+{
+	force_set_sp = !force_set_sp;
+	process_set_sp (node, NULL);
+	force_set_sp = !force_set_sp;
 	return;
 }

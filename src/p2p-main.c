@@ -23,6 +23,7 @@ extern user_cmd_table_t user_op_func_tbl[];
 
 const char *HEADER_VALUE 	= "SUPERNODE";
 const char *P2P_GROUP_NAME 	= "DEDUP";
+pid_t g_pid;
 
 sp_info_t sp_info = {
 	.sp_peer = "",
@@ -144,6 +145,9 @@ int main (int argc, char *argv [])
 	// list_self_test  ();
 #endif
 
+	g_pid = getpid();
+	DBG ("pid=%d\n", g_pid);
+
 	while (!zsys_interrupted) {
 		char command [16] = {0};
 		char message [MAX_MSG_LEN] = {0};
@@ -182,12 +186,15 @@ int main (int argc, char *argv [])
 				break;
 			message [strlen (message) - 1] = 0;
 			zstr_sendx (d_actor, "START", message, NULL);
+		}  else if (strncmp(command, "6", strlen("6")) == 0) {
+			zstr_sendx (d_actor, "EXIT", "dummy", NULL);
 		} else {
 			DBG ("Unknown command...\n");
 		}
 		memset(command, '\0', sizeof(command));
 		memset(message, '\0', sizeof(message));
 	}
+	DBG("list_freelist_freelist_free\n");
 	list_free ();
 	zactor_destroy (&d_actor);
 	return 0;

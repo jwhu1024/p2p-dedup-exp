@@ -78,7 +78,22 @@ KOPRF KOPRFVALUE FILEHASH OURUUID
 /*
 CFCK CF CK FILEHASH
 */
-#define CMD_SEND_CFCK		"CFCK"		/* Send CFCK to p1 			*/
+#define CMD_SEND_CFCK		"CFCK"		/* Send CFCK to p1 				*/
+
+/*
+LFWB
+*/
+#define CMD_LFWB			"LFWB"		/* notify begin forward			*/
+
+/*
+LFW SH UUID
+*/
+#define CMD_LFW				"LFW"		/* list forward to next SP		*/
+
+/*
+LFWE
+*/
+#define CMD_LFWE			"LFWE"		/* notify end forward			*/
 
 #define SH_FOUND			1
 #define SH_NOT_FOUND		0
@@ -115,5 +130,6 @@ int p_run_command (char *c, char *v);
 int _system (const char *fmt, ...);
 int is_valid_short_hash (char sh[]);
 int is_file_exist(const char *path);
+void kill_program (int pid);
 
 #endif /* _P2P_UTILS_H_ */
