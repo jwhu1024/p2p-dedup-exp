@@ -56,6 +56,7 @@ static void dedup_actor (zsock_t *pipe, void *args)
 	DBG ("LAN_IFACE\t\t:%s\n"		, LAN_IFACE);
 	DBG ("LAN_IFACE_PORT\t\t:%d\n"	, LAN_IFACE_PORT);
 	DBG ("DISCOVER_INT\t\t:%d\n"	, DISCOVER_INT);
+	DBG ("PID\t\t\t:%d\n"			, g_pid);
 	DBG ("--------------------------------\n");
 #endif /* __DEBUG__ */
 
@@ -137,6 +138,8 @@ int main (int argc, char *argv [])
 	char node_name[32] = {};
 	gen_random_name(node_name);
 
+	g_pid = getpid();
+
 	zactor_t *d_actor = zactor_new (dedup_actor, node_name);
 	assert (d_actor);
 
@@ -144,9 +147,6 @@ int main (int argc, char *argv [])
 	// hash_test();
 	// list_self_test  ();
 #endif
-
-	g_pid = getpid();
-	DBG ("pid=%d\n", g_pid);
 
 	while (!zsys_interrupted) {
 		char command [16] = {0};
@@ -194,7 +194,7 @@ int main (int argc, char *argv [])
 		memset(command, '\0', sizeof(command));
 		memset(message, '\0', sizeof(message));
 	}
-	DBG("list_freelist_freelist_free\n");
+
 	list_free ();
 	zactor_destroy (&d_actor);
 	return 0;
