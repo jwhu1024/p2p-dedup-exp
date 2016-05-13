@@ -115,18 +115,8 @@ int event_exit_handler (req_info_t *info)
 	}
 
 	/* delete all about the exit peer's information when it leave group */
-	int n = 0;
-	struct sh_tbl *s;
-	if (list_count() > 0) {
-		while ((s = list_get_by_index(n)) != NULL) {
-			if (strncmp (info->peer, s->uuid, SP_PEER_UUID_LENGTH) == 0) {
-				list_delete_by_shorthash ((char *) s->short_hash);
-				list_display ();
-			}
-			n++;
-		}
-	}
-
+	list_delete_by_uuid (info->peer);
+	list_display ();
 	free_mem(info);
 	return 1;
 }

@@ -136,6 +136,27 @@ int list_delete_by_shorthash (char *sh)
 	return 0;
 }
 
+void list_delete_by_uuid (char *uuid)
+{
+	int i, idx = 0;
+	struct sh_tbl *s;
+	int c = list_count ();
+
+	for (i = 0; i < c; i++) {
+		s = list_get_by_index (idx);
+		if (s == NULL) {
+			break;
+		}
+
+		if (strncmp (uuid, s->uuid, SP_PEER_UUID_LENGTH) == 0) {
+			list_delete_by_shorthash ((char *) s->short_hash);
+		} else {
+			idx++;
+		}
+		// list_display ();
+	}
+}
+
 int list_update_by_shorthash (struct sh_tbl *list)
 {
 	struct sh_tbl *prev = NULL;
@@ -250,6 +271,8 @@ int list_self_test (void)
 
 	list_add(&new, true);
 	list_display();
+
+	// list_delete_by_uuid ("EEEEEE4BC21AFEF754108FD06A9D8647");
 
 	memcpy(new.uuid, "AAAAABBBBBVVVVVGGGGGTTTTTRRRRRQQ", SP_PEER_UUID_LENGTH);
 	list_update_by_shorthash (new);
