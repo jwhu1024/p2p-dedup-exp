@@ -20,5 +20,6 @@ void list_free (void);
 void list_display (void);
 void list_check_timestamp (time_t cur_time, int threshold);
 struct sh_tbl *list_get_by_index (int idx);
+int list_update_by_shorthash (struct sh_tbl *list);
 
 #endif /* _P2P_LIST_H_ */

@@ -120,7 +120,11 @@ int list_delete_by_shorthash (char *sh)
 			prev->next = del->next;
 
 		if (del == curr) {
-			curr = prev;
+			if (head != curr)
+				curr = prev;
+			else
+				head = curr = NULL;
+
 		} else if (del == head) {
 			head = del->next;
 		}
@@ -130,6 +134,23 @@ int list_delete_by_shorthash (char *sh)
 	del = NULL;
 
 	return 0;
+}
+
+int list_update_by_shorthash (struct sh_tbl *list)
+{
+	struct sh_tbl *prev = NULL;
+	struct sh_tbl *upd = NULL;
+
+	if (L_DEBUG)
+		DBG ("Updating value [%s] from list\n", list->short_hash);
+
+	upd = list_search_by_shorthash ((char *) list->short_hash, &prev);
+	if (upd == NULL) {
+		return 0;
+	} else {
+		strncpy (upd->uuid, list->uuid, SP_PEER_UUID_LENGTH);
+		return 1;
+	}
 }
 
 void list_free (void)
@@ -179,8 +200,8 @@ int list_count ()
 		num++;
 	}
 
-	if (L_DEBUG)
-		DBG ("List have %d ip\n\n", num);
+	// if (L_DEBUG)
+	// 	DBG ("List have %d ip\n\n", num);
 
 	return num;
 }
@@ -205,7 +226,7 @@ struct sh_tbl *list_get_by_index (int idx)
 
 int list_self_test (void)
 {
-	// int ret = 0;
+	int ret = 0;
 
 	struct sh_tbl *ptr = NULL;
 	struct sh_tbl new;
@@ -230,6 +251,9 @@ int list_self_test (void)
 	list_add(&new, true);
 	list_display();
 
+	memcpy(new.uuid, "AAAAABBBBBVVVVVGGGGGTTTTTRRRRRQQ", SP_PEER_UUID_LENGTH);
+	list_update_by_shorthash (new);
+
 	ptr = list_search_by_shorthash ("000000000000", NULL);
 	if (NULL == ptr) {
 		DBG ("%sSearch [sh = 000000000000] failed, no such element found%s\n", LIGHT_GREEN, RESET);
@@ -251,30 +275,29 @@ int list_self_test (void)
 		DBG ("%sSearch passed [sh = 010110001101, uuid = %s]%s\n", LIGHT_GREEN, ptr->uuid, RESET);
 	}
 
-	// ret = list_delete_by_shorthash("010110001101");
-	// if(ret != 0) {
-	//  	DBG ("%sdelete [sh = 010110001101] failed, no such element found%s\n",LIGHT_GREEN, RESET);
-	// } else {
-	//  	DBG ("%sdelete [sh = 010110001101]  passed%s\n",LIGHT_GREEN, RESET);
-	// }
+	ret = list_delete_by_shorthash("010110001101");
+	if (ret != 0) {
+		DBG ("%sdelete [sh = 010110001101] failed, no such element found%s\n", LIGHT_GREEN, RESET);
+	} else {
+		DBG ("%sdelete [sh = 010110001101]  passed%s\n", LIGHT_GREEN, RESET);
+	}
 
-	// list_display();
+	list_display();
 
-	// ret = list_delete_by_shorthash("111111111111");
-	// if(ret != 0) {
-	//  	DBG ("%sdelete [sh = 111111111111] failed, no such element found%s\n",LIGHT_GREEN, RESET);
-	// } else {
-	//  	DBG ("%sdelete [sh = 111111111111]  passed%s\n",LIGHT_GREEN, RESET);
-	// }
+	ret = list_delete_by_shorthash("111111111111");
+	if (ret != 0) {
+		DBG ("%sdelete [sh = 111111111111] failed, no such element found%s\n", LIGHT_GREEN, RESET);
+	} else {
+		DBG ("%sdelete [sh = 111111111111]  passed%s\n", LIGHT_GREEN, RESET);
+	}
 
-	// list_display();
-
-	// ret = list_delete_by_shorthash("000000000000");
-	// if(ret != 0) {
-	//  	DBG ("%sdelete [sh = 000000000000] failed, no such element found%s\n",LIGHT_GREEN, RESET);
-	// } else {
-	//  	DBG ("%sdelete [sh = 000000000000]  passed%s\n",LIGHT_GREEN, RESET);
-	// }
+	list_display();
+	ret = list_delete_by_shorthash("000000000000");
+	if (ret != 0) {
+		DBG ("%sdelete [sh = 000000000000] failed, no such element found%s\n", LIGHT_GREEN, RESET);
+	} else {
+		DBG ("%sdelete [sh = 000000000000]  passed%s\n", LIGHT_GREEN, RESET);
+	}
 
 	list_display();
 	list_free();

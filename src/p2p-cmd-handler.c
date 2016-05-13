@@ -154,7 +154,7 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 	/* SSU SHORTHASH FILEHASH UUID */
 	sprintf (msg_to_send, "%s %s %s %s", CMD_SSU, short_hash, filehash, zyre_uuid (node));
 	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
-
+	
 	if (fn)	free (fn);
 	return 1;
 }
@@ -176,7 +176,7 @@ void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)
 	process_whisper (node, lmsg);
 	zmsg_destroy 	(&lmsg);
 
-	// DBG ("\n%s=== Send \"%s\" to %s ===%s\n", PURPLE, msg, dest_peer, RESET);
+	DBG ("\n%s=== Send \"%s\" to %s ===%s\n", PURPLE, msg, dest_peer, RESET);
 	return;
 }
 

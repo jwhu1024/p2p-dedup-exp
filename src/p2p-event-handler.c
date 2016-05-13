@@ -114,6 +114,19 @@ int event_exit_handler (req_info_t *info)
 		memset (sp_info.sp_peer, '\0', sizeof (sp_info.sp_peer));
 	}
 
+	/* delete all about the exit peer's information when it leave group */
+	int n = 0;
+	struct sh_tbl *s;
+	if (list_count() > 0) {
+		while ((s = list_get_by_index(n)) != NULL) {
+			if (strncmp (info->peer, s->uuid, SP_PEER_UUID_LENGTH) == 0) {
+				list_delete_by_shorthash ((char *) s->short_hash);
+				list_display ();
+			}
+			n++;
+		}
+	}
+
 	free_mem(info);
 	return 1;
 }
@@ -170,7 +183,10 @@ static void store_conn_history (char *sh, char *uuid)
 	memset(&record, 0, sizeof(struct sh_tbl));
 	memcpy(record.short_hash, sh, SHORT_HASH_LENGTH);
 	memcpy(record.uuid, uuid, SP_PEER_UUID_LENGTH);
-	list_add(&record, true);
+
+	if (list_update_by_shorthash (&record) == 0) {
+		list_add(&record, true);
+	}
 
 #ifdef __DEBUG__
 	list_display();
@@ -538,7 +554,7 @@ static void cmd_list_forward_end_op_func (zyre_t *node, char *message)
 
 static void parse_whisper_message (zyre_t *node, char *message)
 {
-	// DBG ("\n%s=== Received - %s ===%s\n", LIGHT_GREEN, message, RESET);
+	DBG ("\n%s=== Received - %s ===%s\n", LIGHT_GREEN, message, RESET);
 
 	char command[16] = {0};
 	sscanf (message, "%s", command);
@@ -587,6 +603,6 @@ void forward_list_to_next_sp (zyre_t *node)
 		send_whisper_msg (node, msg_to_send, oprf_params.dest_uuid);
 	}
 
-	zclock_sleep (n*500);			// wait for above commands all arrived
+	zclock_sleep (n * 500);			// wait for above commands all arrived
 	return;
 }

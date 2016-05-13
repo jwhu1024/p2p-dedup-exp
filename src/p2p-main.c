@@ -145,7 +145,7 @@ int main (int argc, char *argv [])
 
 #ifdef __DEBUG__
 	// hash_test();
-	// list_self_test  ();
+	// list_self_test();
 #endif
 
 	while (!zsys_interrupted) {
