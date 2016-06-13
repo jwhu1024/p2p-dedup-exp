@@ -2,5 +2,4 @@
 
 cd js && npm install
 cd ../ && cmake -H. -Boutput -DCMAKE_BUILD_TYPE=Debug
-cd output && make clean && make
-./bin/p2p-dedup
+cd output && make clean && make && ./bin/p2p-dedup
