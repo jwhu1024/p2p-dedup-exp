@@ -5,5 +5,6 @@ discovery peers in local network by using zyre
 Please refer to setup.sh
 
 # Build
-1. cd test && cmake -H. -Boutput -DCMAKE_BUILD_TYPE=[Debug|Release]
-2. cd output && make clean && make && ./bin/p2p-dedup 
+cd js && npm install
+cd ../ && cmake -H. -Boutput -DCMAKE_BUILD_TYPE=Debug
+cd output && make clean && make && ./bin/p2p-dedup
