@@ -37,7 +37,7 @@ user_cmd_table_t user_op_func_tbl[] = {
 	{	"START",		process_start	 	},
 	{	"EXIT",			process_exit	 	},
 #ifdef _AUTO_TEST_MODE_
-	{	"AUTOMODE",		process_automode 	},
+	{	"AUTO",		process_automode 	},
 #endif /* _AUTO_TEST_MODE_ */
 	{	"",				NULL	 			}
 };
@@ -161,7 +161,7 @@ static int process_start (zyre_t *node, zmsg_t *msg)
 	/* SSU SHORTHASH FILEHASH UUID */
 	sprintf (msg_to_send, "%s %s %s %s", CMD_SSU, short_hash, filehash, zyre_uuid (node));
 	send_whisper_msg (node, msg_to_send, sp_p->sp_peer);
-	
+
 	if (fn)	free (fn);
 	return 1;
 }
@@ -175,8 +175,34 @@ static int process_exit (zyre_t *node, zmsg_t *msg)
 }
 
 #ifdef _AUTO_TEST_MODE_
+#define FILE_NUM	20
+#define TEST_RUN	3
+
+static void *auto_test_th (void *args)
+{
+	int i, j;
+	zyre_t *node = (zyre_t *) args;
+
+	for (i = 0; i < TEST_RUN; i++) {
+		for (j = 0; j < FILE_NUM; j++) {
+			zmsg_t *msg_auto = zmsg_new ();
+			zmsg_pushstrf (msg_auto, "/tmp/data/%d", j + 1);
+			// zmsg_dump (msg_auto);
+			process_start (node, msg_auto);
+			zmsg_destroy (&msg_auto);
+			zclock_sleep (3000);
+		}
+		_system ("echo \"----------------------------\" >> /tmp/upload_count");
+	}
+	return NULL;
+}
+
 static int process_automode (zyre_t *node, zmsg_t *msg)
 {
+	_system ("echo > /tmp/upload_count");
+	int rc = zthread_new (auto_test_th, (void *) node);
+	assert (rc == 0);
+	zclock_sleep (100);
 	return 1;
 }
 #endif /* _AUTO_TEST_MODE_ */

@@ -191,7 +191,7 @@ int main (int argc, char *argv [])
 		}
 #ifdef _AUTO_TEST_MODE_
 		else if (strncmp(command, "7", strlen("7")) == 0) {
-			zstr_sendx (d_actor, "AUTOMODE", "dummy", NULL);
+			zstr_sendx (d_actor, "AUTO", "dummy", NULL);
 		}
 #endif /* _AUTO_TEST_MODE_ */
 		else {
