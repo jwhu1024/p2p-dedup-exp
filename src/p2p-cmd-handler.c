@@ -176,7 +176,7 @@ static int process_exit (zyre_t *node, zmsg_t *msg)
 
 #ifdef _AUTO_TEST_MODE_
 #define FILE_NUM	20
-#define TEST_RUN	3
+#define TEST_RUN	5
 
 static void *auto_test_th (void *args)
 {
@@ -194,7 +194,7 @@ static void *auto_test_th (void *args)
 		}
 		_system ("echo \"----------------------------\" >> /tmp/upload_count");
 		DBG ("########## Wait 20 seconds for next round... ##########\n");
-		zclock_sleep (20000);
+		zclock_sleep (10000);
 	}
 	return NULL;
 }
@@ -218,7 +218,7 @@ void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)
 	process_whisper (node, lmsg);
 	zmsg_destroy 	(&lmsg);
 
-	DBG ("\n%s=== Send \"%s\" to %s ===%s\n", PURPLE, msg, dest_peer, RESET);
+	// DBG ("\n%s=== Send \"%s\" to %s ===%s\n", PURPLE, msg, dest_peer, RESET);
 	return;
 }
 
@@ -229,7 +229,7 @@ void send_shout_msg (zyre_t *node, char *msg)
 	process_shout (node, lmsg);
 	zmsg_destroy 	(&lmsg);
 
-	DBG ("%s=== Send \"%s\" to all peers ===%s\n", LIGHT_PURPLE, msg, RESET);
+	// DBG ("%s=== Send \"%s\" to all peers ===%s\n", LIGHT_PURPLE, msg, RESET);
 	return;
 }
 

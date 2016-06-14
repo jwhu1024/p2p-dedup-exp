@@ -511,12 +511,12 @@ static void cmd_send_cfck_op_func (zyre_t *node, char *message)
 		DBG ("Ready to upload file to server...\n");
 		upload_file_to_fakecloud (SERVER_IP, SERVER_PORT);
 #ifdef _AUTO_TEST_MODE_
-		_system ("echo 1 >> /tmp/upload_count");
+		_system ("echo -n 1 >> /tmp/upload_count");
 #endif /* _AUTO_TEST_MODE_ */
 	} else {
 		DBG ("Don't need to upload the same file to server again...\n");
 #ifdef _AUTO_TEST_MODE_
-		_system ("echo 0 >> /tmp/upload_count");
+		_system ("echo -n 0 >> /tmp/upload_count");
 #endif /* _AUTO_TEST_MODE_ */
 	}
 
@@ -550,7 +550,7 @@ static void cmd_list_forward_end_op_func (zyre_t *node, char *message)
 
 static void parse_whisper_message (zyre_t *node, char *message)
 {
-	DBG ("\n%s=== Received - %s ===%s\n", LIGHT_GREEN, message, RESET);
+	// DBG ("\n%s=== Received - %s ===%s\n", LIGHT_GREEN, message, RESET);
 
 	char command[16] = {0};
 	sscanf (message, "%s", command);
