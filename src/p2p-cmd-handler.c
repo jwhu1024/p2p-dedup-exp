@@ -24,6 +24,10 @@ static int process_set_sp 		(zyre_t *node, zmsg_t *msg);
 static int process_start 		(zyre_t *node, zmsg_t *msg);
 static int process_exit 		(zyre_t *node, zmsg_t *msg);
 
+#ifdef _AUTO_TEST_MODE_
+static int process_automode		(zyre_t *node, zmsg_t *msg);
+#endif /* _AUTO_TEST_MODE_ */
+
 user_cmd_table_t user_op_func_tbl[] = {
 	{	"$TERM",		process_terminate 	},
 	{	"SHOUT",		process_shout	 	},
@@ -32,6 +36,9 @@ user_cmd_table_t user_op_func_tbl[] = {
 	{	"SETSP",		process_set_sp	 	},
 	{	"START",		process_start	 	},
 	{	"EXIT",			process_exit	 	},
+#ifdef _AUTO_TEST_MODE_
+	{	"AUTOMODE",		process_automode 	},
+#endif /* _AUTO_TEST_MODE_ */
 	{	"",				NULL	 			}
 };
 
@@ -166,6 +173,13 @@ static int process_exit (zyre_t *node, zmsg_t *msg)
 	terminated = true;
 	return 1;
 }
+
+#ifdef _AUTO_TEST_MODE_
+static int process_automode (zyre_t *node, zmsg_t *msg)
+{
+	return 1;
+}
+#endif /* _AUTO_TEST_MODE_ */
 
 /* helper functions */
 void send_whisper_msg (zyre_t *node, char *msg, char *dest_peer)

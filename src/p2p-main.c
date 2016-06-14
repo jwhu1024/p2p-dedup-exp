@@ -186,9 +186,15 @@ int main (int argc, char *argv [])
 				break;
 			message [strlen (message) - 1] = 0;
 			zstr_sendx (d_actor, "START", message, NULL);
-		}  else if (strncmp(command, "6", strlen("6")) == 0) {
+		} else if (strncmp(command, "6", strlen("6")) == 0) {
 			zstr_sendx (d_actor, "EXIT", "dummy", NULL);
-		} else {
+		}
+#ifdef _AUTO_TEST_MODE_
+		else if (strncmp(command, "7", strlen("7")) == 0) {
+			zstr_sendx (d_actor, "AUTOMODE", "dummy", NULL);
+		}
+#endif /* _AUTO_TEST_MODE_ */
+		else {
 			DBG ("Unknown command...\n");
 		}
 		memset(command, '\0', sizeof(command));

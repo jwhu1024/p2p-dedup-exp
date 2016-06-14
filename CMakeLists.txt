@@ -4,7 +4,7 @@ cmake_minimum_required (VERSION 2.6)
 project(p2p-dedup)
 
 # compiler option for debug mode (binary about 315K)
-SET(CMAKE_C_FLAGS_DEBUG "$ENV{CFLAGS} -O0 -Wall -g -ggdb -D__DEBUG__")
+SET(CMAKE_C_FLAGS_DEBUG "$ENV{CFLAGS} -O0 -Wall -g -ggdb -D__DEBUG__ -D_AUTO_TEST_MODE_")
 
 # compiler option for release mode (binary about 7.9K)
 SET(CMAKE_C_FLAGS_RELEASE "$ENV{CFLAGS} -O3 -Wall")

@@ -28,6 +28,9 @@ void print_command_list (void)
 	printf("[4]\t\tSETSP\t\tSet Current Node as SuperPeer\n");
 	printf("[5]\t\tSTART\t\tStart Test Process\n");
 	printf("[6]\t\tEXIT\t\tForward The List Then Terminate the program\n");
+#ifdef _AUTO_TEST_MODE_
+	printf("[7]\t\tAUTO\t\tStart a Auto Test\n");
+#endif /* _AUTO_TEST_MODE_ */
 	printf("-----------------------------------------\n");
 }
 
