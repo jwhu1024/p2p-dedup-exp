@@ -193,6 +193,8 @@ static void *auto_test_th (void *args)
 			zclock_sleep (3000);
 		}
 		_system ("echo \"----------------------------\" >> /tmp/upload_count");
+		DBG ("########## Wait 20 seconds for next round... ##########\n");
+		zclock_sleep (20000);
 	}
 	return NULL;
 }
