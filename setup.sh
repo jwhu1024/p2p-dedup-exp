@@ -13,23 +13,6 @@ function setup_linux_package ()
 	apt-get install nodejs npm libgmp3-dev openssl libssl-dev pkg-config libgmp-dev lzip curl libtool autoconf -y
 }
 
-function setup_nodejs ()
-{
-    # apt-get install nodejs
-
-<<BUILDFROMSRC
-    cd /tmp
-	wget -v https://nodejs.org/dist/v4.4.1/node-v4.4.1.tar.gz
-	tar xvf node-v4.4.1.tar.gz
-	cd node-v4.4.1
-	./configure
-	make
-	make install
-	node -v
-	npm -v
-BUILDFROMSRC
-}
-
 function setup_zeromq ()
 {
 	cd /tmp
@@ -87,7 +70,6 @@ python --version
 node -v
 npm -v
 curl --version
-#setup_nodejs
-#setup_zeromq
+setup_zeromq
 #setup_httpie
 #setup_my_project
