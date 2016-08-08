@@ -4,6 +4,10 @@ language: c
 
 compiler: gcc
 
+before_install:
+    - add-apt-repository ppa:ubuntu-toolchain-r/test -y
+    - apt-get update -q
+
 before_script:
     - sudo ./setup.sh
     - cmake -H. -Boutput -DCMAKE_BUILD_TYPE=Release

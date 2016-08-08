@@ -3,8 +3,8 @@
 function setup_linux_package ()
 {
 	apt-get install python-software-properties -y
-	add-apt-repository ppa:ubuntu-toolchain-r/test
-	apt-get update
+	#add-apt-repository ppa:ubuntu-toolchain-r/test
+	#apt-get update
 	apt-get install g++-4.8 gcc-4.8 -y
 	update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
 	update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
