@@ -11,6 +11,8 @@
 // #include "p2p-list.h"
 #endif
 
+#define P2P_DEDUP_VER       "1.01"
+
 #define NODE_NAME_PREFIX	"cli-"
 #define LAN_IFACE			"eth1"
 #define LAN_IFACE_PORT		5670
@@ -142,6 +144,9 @@ int main (int argc, char *argv [])
 
 	zactor_t *d_actor = zactor_new (dedup_actor, node_name);
 	assert (d_actor);
+
+    if (argc > 0)
+        printf ("p2p-dedup %s is work!\n", P2P_DEDUP_VER);
 
 #ifdef __DEBUG__
 	// hash_test();
