@@ -3,8 +3,6 @@
 function setup_linux_package ()
 {
 	apt-get install python-software-properties -y
-	#add-apt-repository ppa:ubuntu-toolchain-r/test
-	#apt-get update
 	apt-get install g++-4.8 gcc-4.8 -y
 	update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
 	update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
@@ -56,20 +54,6 @@ function setup_node_dep ()
     cd js && npm install
 }
 
-#function setup_my_project ()
-#{
-#	cd ~
-#	git clone https://github.com/jwhu1024/test.git
-#	cd test
-#	./build_cmd
-#}
-
 setup_linux_package
-
-python --version
-node -v
-npm -v
-curl --version
 setup_zeromq
-#setup_httpie
-#setup_my_project
+setup_httpie
