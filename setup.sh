@@ -10,12 +10,12 @@ function setup_linux_package ()
 	update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
 	cd /tmp && wget https://bootstrap.pypa.io/get-pip.py
 	python get-pip.py
-	apt-get install nodejs libgmp3-dev openssl libssl-dev pkg-config libgmp-dev lzip curl libtool autoconf -y
+	apt-get install nodejs npm libgmp3-dev openssl libssl-dev pkg-config libgmp-dev lzip curl libtool autoconf -y
 }
 
 function setup_nodejs ()
 {
-    apt-get install nodejs
+    # apt-get install nodejs
 
 <<BUILDFROMSRC
     cd /tmp
