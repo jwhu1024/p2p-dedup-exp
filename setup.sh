@@ -6,10 +6,10 @@ function setup_linux_package ()
 	add-apt-repository ppa:ubuntu-toolchain-r/test
 	apt-get update
 	apt-get install g++-4.8 gcc-4.8 -y
-	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
-	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
+	update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
+	update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
 	cd /tmp && wget https://bootstrap.pypa.io/get-pip.py
-	sudo python get-pip.py
+	python get-pip.py
 	apt-get install htop vim git build-essential libgmp3-dev htop vim git build-essential openssl libssl-dev pkg-config libgmp-dev lzip curl libtool autoconf cmake -y
 }
 
@@ -33,29 +33,29 @@ function setup_zeromq ()
 	cd libsodium
 	./autogen.sh && ./configure && make check
 	
-	sudo make install
-	sudo ldconfig
+	make install
+	ldconfig
 	
 	cd /tmp
 	git clone git://github.com/zeromq/libzmq.git
 	cd libzmq
 	./autogen.sh && ./configure && make check
-	sudo make install
-	sudo ldconfig
+	make install
+	ldconfig
 	
 	cd /tmp
 	git clone git://github.com/zeromq/czmq.git
 	cd czmq
 	./autogen.sh && ./configure && make check
-	sudo make install
-	sudo ldconfig
+	make install
+	ldconfig
 
 	cd /tmp
 	git clone git://github.com/zeromq/zyre.git
 	cd zyre
 	./autogen.sh && ./configure && make check
-	sudo make install
-	sudo ldconfig
+	make install
+	ldconfig
 }
 
 function setup_httpie ()
