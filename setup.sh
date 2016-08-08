@@ -64,16 +64,21 @@ function setup_httpie ()
 	pip install --upgrade httpie
 }
 
-function setup_my_project ()
+function setup_node_dep ()
 {
-	cd ~
-	git clone https://github.com/jwhu1024/test.git
-	cd test
-	./build_cmd
+    cd js && npm install
 }
+
+#function setup_my_project ()
+#{
+#	cd ~
+#	git clone https://github.com/jwhu1024/test.git
+#	cd test
+#	./build_cmd
+#}
 
 setup_linux_package
 setup_nodejs
 setup_zeromq
 setup_httpie
-setup_my_project
+#setup_my_project
