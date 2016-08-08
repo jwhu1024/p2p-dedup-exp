@@ -10,12 +10,15 @@ function setup_linux_package ()
 	update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
 	cd /tmp && wget https://bootstrap.pypa.io/get-pip.py
 	python get-pip.py
-	apt-get install htop vim git build-essential libgmp3-dev htop vim git build-essential openssl libssl-dev pkg-config libgmp-dev lzip curl libtool autoconf cmake -y
+	apt-get install nodejs libgmp3-dev openssl libssl-dev pkg-config libgmp-dev lzip curl libtool autoconf -y
 }
 
 function setup_nodejs ()
 {
-	cd /tmp
+    apt-get install nodejs
+
+<<BUILDFROMSRC
+    cd /tmp
 	wget -v https://nodejs.org/dist/v4.4.1/node-v4.4.1.tar.gz
 	tar xvf node-v4.4.1.tar.gz
 	cd node-v4.4.1
@@ -24,6 +27,7 @@ function setup_nodejs ()
 	make install
 	node -v
 	npm -v
+BUILDFROMSRC
 }
 
 function setup_zeromq ()
@@ -78,7 +82,12 @@ function setup_node_dep ()
 #}
 
 setup_linux_package
-setup_nodejs
-setup_zeromq
-setup_httpie
+
+python --version
+node -v
+npm -v
+curl --version
+#setup_nodejs
+#setup_zeromq
+#setup_httpie
 #setup_my_project
