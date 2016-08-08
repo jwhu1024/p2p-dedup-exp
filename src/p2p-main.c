@@ -137,6 +137,11 @@ int gen_random_name (char *name)
 
 int main (int argc, char *argv [])
 {
+    if (argc > 0) {
+        printf ("p2p-dedup %s is work!\n", P2P_DEDUP_VER);
+        return 0;
+    }
+    
 	char node_name[32] = {};
 	gen_random_name(node_name);
 
@@ -144,11 +149,6 @@ int main (int argc, char *argv [])
 
 	zactor_t *d_actor = zactor_new (dedup_actor, node_name);
 	assert (d_actor);
-
-    if (argc > 0) {
-        printf ("p2p-dedup %s is work!\n", P2P_DEDUP_VER);
-        return 0;
-    }
 
 #ifdef __DEBUG__
 	// hash_test();
